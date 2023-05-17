@@ -4,6 +4,7 @@ const express = require("express");
 const app = express();
 
 const connectDB = require("./db/connect");
+
 const authenticate = require("./middlewares/authentication");
 const userAuthRouter = require("./routes/userAuthRouter");
 const productUserRouter = require("./routes/productUserRouter");
