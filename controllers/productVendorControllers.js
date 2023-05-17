@@ -394,6 +394,57 @@ const orderCompletedUser = async (req, res) => {
 }
 
 
+//controller to deliver the product and reflect it in vendor schema
+//req config:
+//send auth token as authorization Bearer ... in the header
+//send data in form of raw json in the req.body in format {"orderID":0} 
+
+const orderDeliveredVendor = async (req, res) => {
+    if (req.user.role === "vendor") {
+        const vendorID = req.user.id;
+        const { orderID } = req.body;
+        Vendor.findById(vendorID, (err, vendor) => {
+            if (err) return console.error(err)
+            const orderHistory = vendor.orderHistory;
+            console.log(vendor);
+            orderHistory.map((item) => {
+                if (item.orderID === orderID) {
+                    item.status = "delivered";
+                    item.taken = "delivered";
+                }
+            })
+            vendor.save();
+            return res.status(StatusCodes.OK).send("Order is delivered in vendor schema!")
+        })
+    }
+}
+
+
+
+//controller to set status of an order to ready and reflect it in vendor schema
+//req config:
+//send auth token as authorization Bearer ... in the header
+//send data in form of raw json in the req.body in format {"userID":"dwf324f79g23","orderID":0} 
+
+const orderDeliveredUser = async (req, res) => {
+    if (req.user.role === "vendor") {
+        const { userID, orderID } = req.body;
+        User.findById(userID, (err, user) => {
+            if (err) return console.error(err)
+            const orderHistory = user.orderHistory;
+            orderHistory.map((item) => {
+                if (item.orderID === orderID) {
+                    item.status = "delivered";
+                    item.taken = "delivered";
+                }
+            })
+            user.save();
+            return res.status(StatusCodes.OK).send("Order is delivered in user schema!")
+        })
+    }
+}
+
+
 //psuedo controller to fetch all the orders
 //req config:
 //send auth token as authorization Bearer ... in the header
@@ -1053,4 +1104,4 @@ const getLastSixMonths = () => {
     return last6Months
 }
 
-module.exports = { createProduct, getProducts, updateProduct, deleteProduct, getAllProducts, thisWeekPerformance, acceptOrderVendor, acceptOrderUser, declineOrderVendor, declineOrderUser, setTimeVendor, setTimeUser, orderCompletedVendor, orderCompletedUser, getAllOrders, getAverageVisitors, getAverageVisitorsForSixWeeks, getAverageVisitorsForSixMonths, getRevenueFor6Days, getRevenueFor6Weeks, getRevenueFor6Months, getBestPerforming }
+module.exports = { createProduct, getProducts, updateProduct, deleteProduct, getAllProducts, thisWeekPerformance, acceptOrderVendor, acceptOrderUser, declineOrderVendor, declineOrderUser, setTimeVendor, setTimeUser, orderCompletedVendor, orderCompletedUser, orderDeliveredVendor, orderDeliveredUser, getAllOrders, getAverageVisitors, getAverageVisitorsForSixWeeks, getAverageVisitorsForSixMonths, getRevenueFor6Days, getRevenueFor6Weeks, getRevenueFor6Months, getBestPerforming }

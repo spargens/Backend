@@ -11,6 +11,12 @@ const getAllVendors = async (req, res) => {
     return res.status(StatusCodes.OK).json(vendors)
 }
 
+//getting all the products
+const getAllProducts = async (req, res) => {
+    const products = await Product.find({});
+    return res.status(StatusCodes.OK).json(products)
+}
+
 //getting products according to the mood to be displayed on the frontend
 //req configuration:
 //send the keyword to be searched in mood in form of query,eg, ?mood=sweet
@@ -35,6 +41,7 @@ const getProducts = async (req, res) => {
 
 const getProductById = async (req, res) => {
     let { productID } = req.body;
+    console.log(productID);
     let product = await Product.findById(productID);
     return res.status(StatusCodes.OK).json(product)
 }
@@ -55,4 +62,4 @@ const verifyToken = async (req, res) => {
 
 
 
-module.exports = { getAllVendors, getProductsByMood, getProducts, getProductById, verifyToken }
+module.exports = { getAllVendors, getAllProducts, getProductsByMood, getProducts, getProductById, verifyToken }

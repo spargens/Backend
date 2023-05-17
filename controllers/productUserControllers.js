@@ -224,7 +224,7 @@ const getCartData = async (req, res) => {
 //controller to feed the orders to vendor schema
 //req configuration:
 //authorization token in req header
-//send a raw json file in req.body in format {"otp":"2315",orderID":1,"productID":"3er233fe3ef3f2","vendorID":"d2d3dj3ef3rfiorf","userName":"Amartya","foodName":"Pizza","pricePaid":"234","qty":2,"taken":"pending","status":"cooking","setTime":"","timeOfDelivery":"",dateOfDelivery:"30/12/22"}
+//send a raw json file in req.body in format {"otp":"2315",orderID":1,"productID":"3er233fe3ef3f2","vendorID":"d2d3dj3ef3rfiorf","userName":"Amartya","productName":"Pizza","pricePaid":"234","qty":2,"taken":"pending","status":"cooking","setTime":"","timeOfDelivery":"",dateOfDelivery:"30/12/22",category:enum["food","gift"],giftUid:"" or null}
 
 const feedOrdersToVendor = async (req, res) => {
     if (req.user.role === "user") {
@@ -241,8 +241,8 @@ const feedOrdersToVendor = async (req, res) => {
         }
         let year = date.getFullYear();
         let currentDate = `${day}-${month}-${year}`;
-        const { otp, orderID, userID, productID, vendorID, userName, foodName, amtReceived, qty, taken, status, setTime, timeOfDelivery } = req.body;
-        const data = { otp: otp, orderID: orderID, userID: userID, productID: productID, vendorID: vendorID, userName: userName, foodName: foodName, amtReceived: amtReceived, qty: qty, taken: taken, status: status, setTime: setTime, timeOfDelivery: timeOfDelivery, dateOfDelivery: currentDate }
+        const { otp, orderID, userID, productID, vendorID, userName, productName, amtReceived, qty, taken, status, setTime, timeOfDelivery, category, giftUid } = req.body;
+        const data = { otp: otp, orderID: orderID, userID: userID, productID: productID, vendorID: vendorID, userName: userName, productName: productName, amtReceived: amtReceived, qty: qty, taken: taken, status: status, setTime: setTime, timeOfDelivery: timeOfDelivery, dateOfDelivery: currentDate, category: category, giftUid: giftUid }
         Vendor.findById(vendorID, (err, vendor) => {
             if (err) return console.error(err)
             vendor.orderHistory.push(data)
@@ -256,7 +256,7 @@ const feedOrdersToVendor = async (req, res) => {
 //controller to feed the orders to user schema
 //req configuration:
 //authorization token in req header
-//send a raw json file in req.body in format {"otp":"2315","orderID":1,"productID":"3er233fe3ef3f2","vendorID":"d2d3dj3ef3rfiorf","userName":"Amartya","foodName":"Pizza",pricePaid":"234","qty":2,"taken":"pending","status":"cooking","setTime":"","timeOfDelivery":"",dateOfDelivery:"30/12/22"}
+//send a raw json file in req.body in format {"otp":"2315","orderID":1,"productID":"3er233fe3ef3f2","vendorID":"d2d3dj3ef3rfiorf","userName":"Amartya","productName":"Pizza",pricePaid":"234","qty":2,"taken":"pending","status":"cooking","setTime":"","timeOfDelivery":"",dateOfDelivery:"30/12/22",category:enum["food","gift"],giftUid:"" or null}
 
 const feedOrdersToUser = async (req, res) => {
     if (req.user.role === "user") {
@@ -273,8 +273,8 @@ const feedOrdersToUser = async (req, res) => {
         }
         let year = date.getFullYear();
         let currentDate = `${day}-${month}-${year}`;
-        const { otp, orderID, userID, productID, vendorID, userName, foodName, amtReceived, qty, taken, status, setTime, timeOfDelivery } = req.body;
-        const data = { otp: otp, orderID: orderID, userID: userID, productID: productID, vendorID: vendorID, userName: userName, foodName: foodName, amtReceived: amtReceived, qty: qty, taken: taken, status: status, setTime: setTime, timeOfDelivery: timeOfDelivery, dateOfDelivery: currentDate }
+        const { otp, orderID, userID, productID, vendorID, userName, productName, amtReceived, qty, taken, status, setTime, timeOfDelivery, category, giftUid } = req.body;
+        const data = { otp: otp, orderID: orderID, userID: userID, productID: productID, vendorID: vendorID, userName: userName, productName: productName, amtReceived: amtReceived, qty: qty, taken: taken, status: status, setTime: setTime, timeOfDelivery: timeOfDelivery, dateOfDelivery: currentDate, category: category, giftUid: giftUid }
         User.findById(userID, (err, user) => {
             if (err) return console.error(err)
             user.orderHistory.push(data)

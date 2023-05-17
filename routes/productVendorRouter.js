@@ -11,7 +11,7 @@ const storage = multer.diskStorage({
     }
 })
 const upload = multer({ storage: storage });
-const { createProduct, getProducts, updateProduct, deleteProduct, getAllProducts, thisWeekPerformance, acceptOrderVendor, acceptOrderUser, declineOrderVendor, declineOrderUser, setTimeVendor, setTimeUser, orderCompletedVendor, orderCompletedUser, getAllOrders, getAverageVisitors, getAverageVisitorsForSixWeeks, getAverageVisitorsForSixMonths, getRevenueFor6Days, getRevenueFor6Weeks, getRevenueFor6Months, getBestPerforming } = require('../controllers/productVendorControllers')
+const { createProduct, getProducts, updateProduct, deleteProduct, getAllProducts, thisWeekPerformance, acceptOrderVendor, acceptOrderUser, declineOrderVendor, declineOrderUser, setTimeVendor, setTimeUser, orderCompletedVendor, orderCompletedUser, orderDeliveredVendor, orderDeliveredUser, getAllOrders, getAverageVisitors, getAverageVisitorsForSixWeeks, getAverageVisitorsForSixMonths, getRevenueFor6Days, getRevenueFor6Weeks, getRevenueFor6Months, getBestPerforming } = require('../controllers/productVendorControllers')
 
 router.route('/').post(upload.single('image'), createProduct).get(getProducts).patch(updateProduct)
 router.route('/deleteProduct').post(deleteProduct)
@@ -23,6 +23,8 @@ router.route('/setTimeVendor').post(setTimeVendor)
 router.route('/setTimeUser').post(setTimeUser)
 router.route('/orderCompletedVendor').post(orderCompletedVendor)
 router.route('/orderCompletedUser').post(orderCompletedUser)
+router.route('/orderDeliveredVendor').post(orderDeliveredVendor)
+router.route('/orderDeliveredUser').post(orderDeliveredUser)
 router.route('/getAllOrders').get(getAllOrders)
 router.route('/getAverageVisitors').get(getAverageVisitors)
 router.route('/getAverageVisitorsForSixWeeks').get(getAverageVisitorsForSixWeeks)

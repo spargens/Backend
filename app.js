@@ -17,6 +17,11 @@ const clubRouter = require("./routes/clubRouter");
 const propsRouter = require('./routes/propsRouters');
 const vendorRegisterRouter = require("./routes/vendorRegisterRouter");
 const vendorLoginRouter = require("./routes/vendorLoginRouter");
+const giftRouter = require("./routes/giftRouter");
+const cardRouter = require("./routes/cardRouter");
+const bagRouter = require("./routes/bagRouter");
+const communityRouter = require("./routes/communityRouter");
+const contentRouter = require("./routes/contentRouter");
 
 app.use(cors());
 app.use(express.json());
@@ -37,6 +42,11 @@ app.use("/api/v1/admin", adminAuthRouter);
 app.use("/api/v1/event", authenticate, eventRouter);
 app.use("/api/v1/club", authenticate, clubRouter);
 app.use("/api/v1/props", authenticate, propsRouter);
+app.use("/api/v1/gifts", authenticate, giftRouter);
+app.use("/api/v1/card", authenticate, cardRouter);
+app.use("/api/v1/bag", authenticate, bagRouter);
+app.use("/api/v1/community", authenticate, communityRouter);
+app.use("/api/v1/content", authenticate, contentRouter);
 
 const port = process.env.PORT || 5050;
 

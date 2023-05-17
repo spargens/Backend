@@ -46,14 +46,16 @@ const userSchema = new mongoose.Schema({
     productID: { type: String, ref: 'Product' },
     vendorID: { type: String, ref: 'Vendor' },
     userName: { type: String },
-    foodName: { type: String },
+    productName: { type: String },
     amtReceived: { type: Number, required: [true, 'Amount received must be logged explicitly in order history console.'] },
     qty: { type: Number },
-    taken: { type: String, enum: ['accepted', 'declined', 'pending'], default: 'pending' },
+    taken: { type: String, enum: ['accepted', 'declined', 'pending', 'delivered'], default: 'pending' },
     status: { type: String, enum: ['cooking', 'ready', 'delivered'], default: 'cooking' },
     setTime: { type: Number, default: 0 },
     timeOfDelivery: { type: String },
-    dateOfDelivery: { type: String }
+    dateOfDelivery: { type: String },
+    category: { type: String, enum: ["gift", "food"] },
+    giftUid: { type: String }
   }],
   cart: {
     type: Array,
@@ -84,6 +86,41 @@ const userSchema = new mongoose.Schema({
   //propOrder {id:"P-1",otp:8183,name:"Projector",time:"Night Shift",status:"Received"(enum["Yet to be dispatched","Dispatched"]),remark:"",logId:"",date:"",reviewed:false}
   propOrder: {
     type: Array,
+  },
+  //giftsSend {uid:"",text:"",receiverId:"",status:enum["send","accepted","declined","received","reacted"],code:"",locker:"",reaction:"",productsAttached:enum[true,false],productId:"",anonymous:enum[true,false]}
+  giftsSend: {
+    type: Array
+  },
+  //giftsSend {statusMsg:"",uid:"",text:"",senderId:"",status:enum["send","accepted","declined","received","reacted"],code:"",locker:"",reaction:"",productsAttached:enum[true,false],productId:"",anonymous:enum[true,false]}
+  giftsReceived: {
+    type: Array
+  },
+  //notifications {key:"",value:"",data:}
+  notifications: {
+    type: Array
+  },
+  //clubs you are part of...[{clubId}]
+  clubs: {
+    type: Array
+  },
+  //blocked user from sending gifts ["user_id","user_id"]
+  blockList: {
+    type: Array
+  },
+  likedCards: {
+    type: Array
+  },
+  //[{communityId}]
+  communitiesCreated: {
+    type: Array
+  },
+  //[{communityId,star}]
+  communitiesPartOf: {
+    type: Array
+  },
+  //[{communityId,contentId}]
+  communityContribution: {
+    type: Array
   }
 });
 

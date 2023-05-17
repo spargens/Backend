@@ -30,6 +30,36 @@ const adminSchema = new mongoose.Schema({
     adminKey: {
         type: String,
         required: [true, "Please provide an admin key for the admin."]
+    },
+    //gifts {uid:"",senderId:"",receiverId:"",status:enum["vendor","locker","dispatched"]}
+    gifts: {
+        type: Array
+    },
+    clubs: {
+        type: Array
+    },
+    //notifications {key:"",value:"",data:}
+    notifications: {
+        type: Array
+    },
+    unsortedWord: {
+        type: Array
+    },
+    //[{communityId}]
+    communitiesCreated: {
+        type: Array
+    },
+    //[{communityId}]
+    communitiesPartOf: {
+        type: Array
+    },
+    //[{communityId,contentId}]
+    communityContribution: {
+        type: Array
+    },
+    //[url]
+    thrashUrls: {
+        type: Array
     }
 });
 

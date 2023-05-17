@@ -7,6 +7,10 @@ const vendorSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    type: {
+        type: String,
+        enum: ["gift", "normal"]
+    },
     shopNo: {
         type: Number
     },
@@ -45,14 +49,16 @@ const vendorSchema = new mongoose.Schema({
             productID: { type: String, ref: 'Product' },
             vendorID: { type: String, ref: 'Vendor' },
             userName: { type: String },
-            foodName: { type: String },
+            productName: { type: String },
             amtReceived: { type: Number, required: [true, 'Amount received must be logged explicitly in order history console.'] },
             qty: { type: Number },
-            taken: { type: String, enum: ['accepted', 'declined', 'pending'], default: 'pending' },
+            taken: { type: String, enum: ['accepted', 'declined', 'pending', 'delivered'], default: 'pending' },
             status: { type: String, enum: ['cooking', 'ready', 'delivered'], default: 'cooking' },
             setTime: { type: Number, default: 0 },
             timeOfDelivery: { type: String },
-            dateOfDelivery: { type: String }
+            dateOfDelivery: { type: String },
+            category: { type: String, enum: ["gift", "food"] },
+            giftUid: { type: String }
         }],
     moneyMade: [{
         day: { type: Date, default: Date.now },

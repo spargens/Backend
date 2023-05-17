@@ -13,6 +13,7 @@ const auth = async (req, res, next) => {
         req.user = { role: payload.role, id: payload.id }
         next()
     } catch (error) {
+        console.log(error);
         return res.status(StatusCodes.MISDIRECTED_REQUEST).send('You are not authorized to access this route.')
     }
 }
