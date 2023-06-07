@@ -7,14 +7,14 @@ const Content = require("../models/content");
 //Controller 1
 const createCommunity = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
-        const { title, cover, secondaryCover, label } = req.body;
+        const { title, cover, secondaryCover, label, tag } = req.body;
         let creatorId = req.user.id;
         let creatorPos = req.user.role;
         let createdOn = new Date();
         let finalData = {
-            title, cover, secondaryCover, label, creatorId, creatorPos, createdOn
+            title, cover, secondaryCover, label, creatorId, creatorPos, createdOn, tag
         };
-        const community = await Community.create({ ...finalData }, (err, community) => {
+        Community.create({ ...finalData }, (err, community) => {
             if (err) return console.error(err);
             if (req.user.role === "admin") {
                 Admin.findById((req.user.id), (err, admin) => {
@@ -74,7 +74,7 @@ const joinAsMember = async (req, res) => {
             if (req.user.role === "user") {
                 User.findById((req.user.id), (err, user) => {
                     if (err) return console.error(err);
-                    user.communitiesPartOf.push(communityId);
+                    user.communitiesPartOf.push({ communityId, bestStreak: 0, currentStreak: 0, lastPosted: new Date(), totalLikes: 0, totalPosts: 0, rating: 0 });
                     user.notifications.push({ key: "community", value: "You have joined the community.", data: communityId });
                     user.save();
                 });
@@ -82,7 +82,7 @@ const joinAsMember = async (req, res) => {
             if (req.user.role === "admin") {
                 Admin.findById((req.user.id), (err, admin) => {
                     if (err) return console.error(err);
-                    admin.communitiesPartOf.push(communityId);
+                    admin.communitiesPartOf.push({ communityId, bestStreak: 0, currentStreak: 0, lastPosted: new Date(), totalLikes: 0, totalPosts: 0, rating: 0 });
                     admin.save();
                 })
             }
@@ -111,7 +111,7 @@ const leaveAsMember = async (req, res) => {
                 User.findById((req.user.id), (err, user) => {
                     if (err) return console.error(err);
                     let communities = user.communitiesPartOf;
-                    communities = communities.filter((item) => item !== communityId);
+                    communities = communities.filter((item) => item.communityId !== communityId);
                     user.communitiesPartOf = [];
                     user.communitiesPartOf.push(...communities);
                     user.notifications.push({ key: "community", value: "You have successfully left the community.", data: communityId });
@@ -122,7 +122,7 @@ const leaveAsMember = async (req, res) => {
                 Admin.findById((req.user.id), (err, admin) => {
                     if (err) return console.error(err);
                     let communities = admin.communitiesPartOf;
-                    communities = communities.filter((item) => item !== communityId);
+                    communities = communities.filter((item) => item.communityId !== communityId);
                     admin.communitiesPartOf = [];
                     admin.communitiesPartOf.push(...communities);
                     admin.save();
@@ -311,15 +311,27 @@ const takeDown = async (req, res) => {
                 contents = contents.filter((item) => item.contentId !== contentId);
                 community.content = [];
                 community.content.push(...contents);
-                User.findById((senderId), (err, user) => {
-                    if (err) return console.error(err);
-                    let contribution = user.communityContribution;
-                    contribution = contribution.filter((item) => item.contentId !== contentId);
-                    user.communityContribution = [];
-                    user.communityContribution.push(...contribution);
-                    user.notifications.push({ key: "community", value: "Your content has been taken down", data: { communityId } });
-                    user.save();
-                });
+                if (req.user.role === "user") {
+                    User.findById((senderId), (err, user) => {
+                        if (err) return console.error(err);
+                        let contribution = user.communityContribution;
+                        contribution = contribution.filter((item) => item.contentId !== contentId);
+                        user.communityContribution = [];
+                        user.communityContribution.push(...contribution);
+                        user.notifications.push({ key: "community", value: "Your content has been taken down", data: { communityId } });
+                        user.save();
+                    });
+                }
+                if (req.user.role === "admin") {
+                    Admin.findById((senderId), (err, admin) => {
+                        if (err) return console.error(err);
+                        let contribution = admin.communityContribution;
+                        contribution = contribution.filter((item) => item.contentId !== contentId);
+                        admin.communityContribution = [];
+                        admin.communityContribution.push(...contribution);
+                        admin.save();
+                    });
+                }
                 community.save((err, update) => {
                     if (err) return console.error(err);
                     return res.status(StatusCodes.OK).send("The content has been successfully taken down.")
@@ -336,4 +348,281 @@ const takeDown = async (req, res) => {
 }
 
 
-module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown };
+//Controller 9
+const updateStreak = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { communityId } = req.body;
+        if (req.user.role === "user") {
+            User.findById((req.user.id), (err, user) => {
+                if (err) return console.error(err);
+                let communitiesPartOf = user.communitiesPartOf;
+                let dataToBeChanged = communitiesPartOf.filter((item) => item.communityId === communityId);
+                let restOfData = communitiesPartOf.filter((item) => item.communityId !== communityId);
+                dataToBeChanged = dataToBeChanged[0];
+                let lastPosted = dataToBeChanged.lastPosted;
+                let today = new Date();
+                const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+                const utc1 = Date.UTC(lastPosted.getFullYear(), lastPosted.getMonth(), lastPosted.getDate());
+                const utc2 = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+                const diff = Math.floor((utc2 - utc1) / _MS_PER_DAY);
+                if (diff === 1) {
+                    dataToBeChanged.currentStreak = dataToBeChanged.currentStreak + 1;
+                    if (dataToBeChanged.currentStreak > dataToBeChanged.bestStreak) {
+                        dataToBeChanged.bestStreak = dataToBeChanged.currentStreak;
+                    }
+                }
+                else if (diff > 1) {
+                    if (dataToBeChanged.currentStreak > dataToBeChanged.bestStreak) {
+                        dataToBeChanged.bestStreak = dataToBeChanged.currentStreak;
+                    }
+                    dataToBeChanged.currentStreak = 1;
+                }
+                dataToBeChanged.lastPosted = new Date();
+                restOfData.push(dataToBeChanged);
+                communitiesPartOf = restOfData;
+                user.communitiesPartOf = [];
+                user.communitiesPartOf.push(...communitiesPartOf);
+                user.save((err, update) => {
+                    if (err) return console.error(err)
+                    return res.status(StatusCodes.OK).send("Streak updated");
+                })
+            })
+        }
+        else {
+            Admin.findById((req.user.id), (err, user) => {
+                if (err) return console.error(err);
+                let communitiesPartOf = user.communitiesPartOf;
+                let dataToBeChanged = communitiesPartOf.filter((item) => item.communityId === communityId);
+                let restOfData = communitiesPartOf.filter((item) => item.communityId !== communityId);
+                dataToBeChanged = dataToBeChanged[0];
+                let lastPosted = dataToBeChanged.lastPosted;
+                let today = new Date();
+                const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+                const utc1 = Date.UTC(lastPosted.getFullYear(), lastPosted.getMonth(), lastPosted.getDate());
+                const utc2 = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+                const diff = Math.floor((utc2 - utc1) / _MS_PER_DAY);
+                if (diff === 1) {
+                    dataToBeChanged.currentStreak = dataToBeChanged.currentStreak + 1;
+                    if (dataToBeChanged.currentStreak > dataToBeChanged.bestStreak) {
+                        dataToBeChanged.bestStreak = dataToBeChanged.currentStreak;
+                    }
+                }
+                else if (diff > 1) {
+                    if (dataToBeChanged.currentStreak > dataToBeChanged.bestStreak) {
+                        dataToBeChanged.bestStreak = dataToBeChanged.currentStreak;
+                    }
+                    dataToBeChanged.currentStreak = 1;
+                }
+                dataToBeChanged.lastPosted = new Date();
+                restOfData.push(dataToBeChanged);
+                communitiesPartOf = restOfData;
+                user.communitiesPartOf = [];
+                user.communitiesPartOf.push(...communitiesPartOf);
+                user.save((err, update) => {
+                    if (err) return console.error(err)
+                    return res.status(StatusCodes.OK).send("Streak updated");
+                })
+            })
+        }
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to update streak.")
+    }
+}
+
+
+//Controller 10
+const likesAndPosts = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { communityId } = req.body;
+        if (req.user.role) {
+            User.findById((req.user.id), (err, user) => {
+                if (err) return console.error(err);
+                let communityContribution = user.communityContribution;
+                let likes = 0;
+                let posts = 0;
+                communityContribution.map((item) => {
+                    if (item.communityId === communityId) {
+                        posts = posts + 1;
+                    }
+                })
+                let communitiesPartOf = user.communitiesPartOf;
+                let dataToBeChanged = communitiesPartOf.filter((item) => item.communityId === communityId);
+                let restOfData = communitiesPartOf.filter((item) => item.communityId !== communityId);
+                dataToBeChanged = dataToBeChanged[0];
+                dataToBeChanged.totalLikes = likes;
+                dataToBeChanged.totalPosts = posts;
+                restOfData.push(dataToBeChanged);
+                communitiesPartOf = restOfData;
+                user.communitiesPartOf = [];
+                user.communitiesPartOf.push(...communitiesPartOf);
+                user.save((err, update) => {
+                    if (err) return console.error(err)
+                    return res.status(StatusCodes.OK).send("Likes and posts updated");
+                })
+            })
+        }
+        else {
+            Admin.findById((req.user.id), (err, user) => {
+                if (err) return console.error(err);
+                let communityContribution = user.communityContribution;
+                let likes = 0;
+                let posts = 0;
+                communityContribution.map((item) => {
+                    if (item.communityId) {
+                        posts = posts + 1;
+                    }
+                })
+                let communitiesPartOf = user.communitiesPartOf;
+                let dataToBeChanged = communitiesPartOf.filter((item) => item.communityId === communityId);
+                let restOfData = communitiesPartOf.filter((item) => item.communityId !== communityId);
+                dataToBeChanged = dataToBeChanged[0];
+                dataToBeChanged.totalLikes = likes;
+                dataToBeChanged.totalPosts = posts;
+                restOfData.push(dataToBeChanged);
+                communitiesPartOf = restOfData;
+                user.communitiesPartOf = [];
+                user.communitiesPartOf.push(...communitiesPartOf);
+                user.save((err, update) => {
+                    if (err) return console.error(err)
+                    return res.status(StatusCodes.OK).send("Likes and posts updated");
+                })
+            })
+        }
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to update number of likes and posts.");
+    }
+}
+
+
+//Controller 11
+const rating = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { communityId } = req.body;
+        if (req.user.role === "user") {
+            User.findById((req.user.id), (err, user) => {
+                if (err) return console.error(err);
+                let communitiesPartOf = user.communitiesPartOf;
+                let dataToBeChanged = communitiesPartOf.filter((item) => item.communityId === communityId);
+                let restOfData = communitiesPartOf.filter((item) => item.communityId !== communityId);
+                dataToBeChanged = dataToBeChanged[0];
+                let bestStreak = dataToBeChanged.bestStreak;
+                let currentStreak = dataToBeChanged.currentStreak;
+                let totalPosts = dataToBeChanged.totalPosts;
+                let rating = Math.floor((totalPosts * 13.6) + bestStreak * 1.4 + currentStreak * 1.7);
+                dataToBeChanged.rating = rating;
+                restOfData.push(dataToBeChanged);
+                communitiesPartOf = restOfData;
+                user.communitiesPartOf = [];
+                user.communitiesPartOf.push(...communitiesPartOf);
+                user.save((err, update) => {
+                    if (err) return console.error(err)
+                    return res.status(StatusCodes.OK).send("Rating updated.");
+                })
+            })
+        }
+        else {
+            Admin.findById((req.user.id), (err, user) => {
+                if (err) return console.error(err);
+                let communitiesPartOf = user.communitiesPartOf;
+                let dataToBeChanged = communitiesPartOf.filter((item) => item.communityId === communityId);
+                let restOfData = communitiesPartOf.filter((item) => item.communityId !== communityId);
+                dataToBeChanged = dataToBeChanged[0];
+                let bestStreak = dataToBeChanged.bestStreak;
+                let currentStreak = dataToBeChanged.currentStreak;
+                let totalPosts = dataToBeChanged.totalPosts;
+                let rating = Math.floor((totalPosts * 13.6) + bestStreak * 1.4 + currentStreak * 1.7);
+                dataToBeChanged.rating = rating;
+                restOfData.push(dataToBeChanged);
+                communitiesPartOf = restOfData;
+                user.communitiesPartOf = [];
+                user.communitiesPartOf.push(...communitiesPartOf);
+                user.save((err, update) => {
+                    if (err) return console.error(err)
+                    return res.status(StatusCodes.OK).send("Rating updated.");
+                })
+            })
+        }
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to update the rating.");
+    }
+}
+
+//Controller 12
+const getAllCommunities = async (req, res) => {
+    const community = await Community.find();
+    return res.status(StatusCodes.OK).json(community);
+}
+
+//Controller 13
+const getCommunityById = async (req, res) => {
+    const { communityId } = req.query;
+    const community = await Community.findById(communityId);
+    if (community) {
+        return res.status(StatusCodes.OK).json(community)
+    }
+    else {
+        return res.status(StatusCodes.OK).send("Community not found.")
+    }
+}
+
+
+//Controller 14
+const getCommunityByTag = async (req, res) => {
+    const { tag } = req.query;
+    console.log(tag);
+    const community = await Community.aggregate({
+        "$search": {
+            "index": "tag",
+            "text": {
+                "query": "Sports",
+                "path": "tag"
+            }
+        }
+    });
+    return res.status(StatusCodes.OK).json(community);
+}
+
+//Controller 15
+const isMember = async (req, res) => {
+    const { communityId } = req.query;
+    if (req.user.role === "user") {
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            let communitiesPartOf = user.communitiesPartOf;
+            communitiesPartOf = communitiesPartOf.filter((item) => item.communityId === communityId);
+            if (communitiesPartOf.length !== 0) {
+                return res.status(StatusCodes.OK).send("You are member.")
+            }
+            else {
+                return res.status(StatusCodes.OK).send("You are not a member.")
+            }
+        })
+    }
+    else if (req.user.role === "admin") {
+        Admin.findById((req.user.id), (err, admin) => {
+            if (err) return console.error(err)
+            let communitiesPartOf = admin.communitiesPartOf;
+            communitiesPartOf = communitiesPartOf.filter((item) => item.communityId === communityId);
+            if (communitiesPartOf.length !== 0) {
+                return res.status(StatusCodes.OK).send("You are member.")
+            }
+            else {
+                return res.status(StatusCodes.OK).send("You are not a member.")
+            }
+        })
+    }
+}
+
+//Controller 16
+const getContentOfACommunity = async (req, res) => {
+    const { communityId } = req.query;
+    const community = await Community.findById(communityId);
+    const contents = community.content;
+    return res.status(StatusCodes.OK).json(contents);
+}
+
+
+module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity };

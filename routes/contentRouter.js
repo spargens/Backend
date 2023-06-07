@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const { createContent, deleteContent } = require("../controllers/contentController");
+const { createContent, likeContent, comment, unlikeContent, deleteComment, deleteContent, getContent } = require("../controllers/contentController");
 
 router.post("/createContent", createContent);
 router.post("/deleteContent", deleteContent);
+router.post("/likeContent", likeContent);
+router.post("/comment", comment);
+router.post("/unlikeContent", unlikeContent);
+router.post("/deleteComment", deleteComment);
+router.get("/getContent", getContent);
 
 module.exports = router;

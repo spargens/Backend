@@ -26,7 +26,7 @@ const contentSchema = new mongoose.Schema({
     },
     sendBy: {
         type: String,
-        enum: ["user", "club", "Macbease", "userGift"],
+        enum: ["userGift", "club", "Macbease", "userGift", "admin", "userCommunity"],
         required: [true, "Please provide who send the content."]
     },
     //name of the community or club it belongs to

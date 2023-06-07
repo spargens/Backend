@@ -114,12 +114,20 @@ const userSchema = new mongoose.Schema({
   communitiesCreated: {
     type: Array
   },
-  //[{communityId,star}]
+  //[{communityId,bestStreak,currentStreak,lastPosted,totalLikes,totalPosts,rating}]
   communitiesPartOf: {
     type: Array
   },
   //[{communityId,contentId}]
   communityContribution: {
+    type: Array
+  },
+  //[{contentId,type:enum["community","club","gift","Macbease"]}]
+  likedContents: {
+    type: Array
+  },
+  //[{contentId,type:enum["community","club","gift","Macbease"],comment}]
+  commentedContents: {
     type: Array
   }
 });

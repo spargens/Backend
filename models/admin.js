@@ -57,6 +57,14 @@ const adminSchema = new mongoose.Schema({
     communityContribution: {
         type: Array
     },
+    //[{contentId,type:enum["community","club","gift","Macbease"]}]
+    likedContents: {
+        type: Array
+    },
+    //[{contentId,type:enum["community","club","gift","Macbease"],comment}]
+    commentedContents: {
+        type: Array
+    },
     //[url]
     thrashUrls: {
         type: Array
