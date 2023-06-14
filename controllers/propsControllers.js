@@ -8,8 +8,13 @@ const registerProp = async (req, res) => {
         const { id, name } = req.body;
         const existingProp = await Props.findOne({ id: id });
         if (existingProp) return res.status(StatusCodes.OK).send("A prop with same id already exists.");
-        const prop = await Props.create({ ...req.body });
-        return res.status(StatusCodes.OK).json({ prop })
+        if (name === "Projector" || name === "Board" || name === "Chess" || name === "Sound-Box") {
+            const prop = await Props.create({ ...req.body });
+            return res.status(StatusCodes.OK).send("Prop was successfully created!")
+        }
+        else {
+            return res.status(StatusCodes.OK).send("Invalid prop name.Available options:Projector,Board,Chess,Sound - Box")
+        }
     }
     else {
         return res.status(StatusCodes.OK).send('Sorry you are not authorized to register a new prop.')
@@ -35,6 +40,11 @@ const deleteProp = async (req, res) => {
 const findAvailableProp = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
         const { prop, day, slotIndex } = req.body;
+        const user = await User.findById(req.user.id);
+        console.log(user.credibilityScore);
+        if (user.credibilityScore < 2) {
+            return res.status(StatusCodes.OK).send("Not enough credit score.")
+        }
         const props = await Props.find({ name: prop, available: true });
         let propList = [];
         let propIds = [];
@@ -232,9 +242,24 @@ const dispatchProp = async (req, res) => {
                 }
                 if (otpMatched && timeIsFine) {
                     item.dispatched = true;
-                    item.dispatchTime = currentTime;
+                    item.dispatchTime = new Date();
                     item.save((err, update) => {
-                        if (err) console.error(err);
+                        if (err) return console.error(err)
+                        User.findById((userId), (err, user) => {
+                            if (err) console.error(err);
+                            let propOrders = user.propOrder;
+                            propOrders.map((item, index) => {
+                                if (item.otp === otp) {
+                                    item.status = "Dispatched";
+                                }
+                            });
+                            user.propOrder = [];
+                            user.propOrder.push(...propOrders);
+                            user.save((err, update) => {
+                                if (err) return console.error(err);
+                                return res.status(StatusCodes.OK).send("Prop has been successfully dispatched.");
+                            })
+                        })
                     })
                 }
                 else if (!otpMatched) {
@@ -244,21 +269,6 @@ const dispatchProp = async (req, res) => {
                     return res.status(StatusCodes.OK).send("It is too early to dispatch.")
                 }
 
-                User.findById((userId), (err, user) => {
-                    if (err) console.error(err);
-                    let propOrders = user.propOrder;
-                    propOrders.map((item, index) => {
-                        if (item.otp === otp) {
-                            item.status = "Dispatched";
-                        }
-                    });
-                    user.propOrder = [];
-                    user.propOrder.push(...propOrders);
-                    user.save((err, update) => {
-                        if (err) return console.error(err);
-                        return res.status(StatusCodes.OK).send("Prop has been successfully dispatched.");
-                    })
-                })
             })
         }
         if (day === false) {
@@ -350,7 +360,7 @@ const returnProps = async (req, res) => {
                         if (err) return console.error(err);
                         let score = user.credibilityScore;
                         let newScore = Number(adminRating);
-                        score = (score + newScore) / 2;
+                        score = (score + newScore) / user.propOrder.length;
                         user.credibilityScore = score;
                         let propOrders = user.propOrder;
                         propOrders.map((item, index) => {
@@ -689,9 +699,78 @@ const shiftArray = async (req, res) => {
     }
 }
 
+
+//Controller 14
+const getPropsOnField = async (req, res) => {
+    if (req.user.role === "admin") {
+        const props = await Props.find({ dispatched: true });
+        return res.status(StatusCodes.OK).json(props);
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to access the status of props.");
+    }
+}
+
+
+//Controller 15
+const pumpUpCreditScore = async (req, res) => {
+    if (req.user.role === "user") {
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            user.credibilityScore = 5;
+            user.save((err, update) => {
+                if (err) return console.error(err)
+                return res.status(StatusCodes.OK).send("Credit score has been pumped up.")
+            })
+        })
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You don't have credit score.")
+    }
+}
+
+
+//Controller 16
+const timeOfReturn = async (req, res) => {
+    if (req.user.role === "admin") {
+        const { propId, otp } = req.body;
+        let prop = await Props.find({ id: propId });
+        prop = prop[0];
+        const startIndex = ["9am", "10am", "11am", "12noon", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm"];
+        const lastIndex = ["10am", "11am", "12noon", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm"];
+        let today = prop.today;
+        for (let i = 0; i < 10; i++) {
+            let booking = today[i].break;
+            if (booking === otp) {
+                let time = startIndex[i] + "  to  " + lastIndex[i];
+                return res.status(StatusCodes.OK).send(time);
+            }
+        }
+        return res.status(StatusCodes.OK).send("Could not find the return slot.")
+    }
+}
+
+
+//Controller 17
+const getStats = async (req, res) => {
+    if (req.user.role === "admin") {
+        const { propName } = req.body;
+        const props = await Props.find({ name: propName });
+        console.log(props);
+        let len = props.length;
+        let available = 0;
+        for (let i = 0; i < len; i++) {
+            if (!props[i].dispatched) available++;
+        }
+        return res.status(StatusCodes.OK).json({ total: len, available })
+    }
+}
+
+
 //controller to get the decommissioned props
 //req configuration:
 //authorization token in req header
+//still unused
 
 const decommissionedProps = async (req, res) => {
     if (req.user.role === "admin") {
@@ -709,6 +788,7 @@ const decommissionedProps = async (req, res) => {
 //controller to find the props whose return are delayed
 //req configuration:
 //authorization token in req header
+//still unused
 
 const delayedProps = async (req, res) => {
     if (req.user.role === "admin") {
@@ -758,6 +838,7 @@ const delayedProps = async (req, res) => {
 //controller to get the statistics of the props
 //req configuration:
 //authorization token in req header
+//still unused
 
 const propsStatistics = async (req, res) => {
     if (req.user.role === "admin") {
@@ -798,4 +879,5 @@ const propsStatistics = async (req, res) => {
     }
 }
 
-module.exports = { registerProp, deleteProp, delayedProps, returnProps, decommissionProp, propsStatistics, decommissionedProps, recommissionProp, dispatchProp, userPropReview, shiftArray, findAvailableProp, placeOrder, getPropOrder, nightBookingAvailability, placeNightOrder };
+
+module.exports = { registerProp, deleteProp, delayedProps, returnProps, decommissionProp, propsStatistics, decommissionedProps, recommissionProp, dispatchProp, userPropReview, shiftArray, findAvailableProp, placeOrder, getPropOrder, nightBookingAvailability, placeNightOrder, getPropsOnField, pumpUpCreditScore, timeOfReturn, getStats };
