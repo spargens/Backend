@@ -717,10 +717,10 @@ const pumpUpCreditScore = async (req, res) => {
     if (req.user.role === "user") {
         User.findById((req.user.id), (err, user) => {
             if (err) return console.error(err)
-            user.credibilityScore = 5;
+            user.credibilityScore = user.credibilityScore + 1;
             user.save((err, update) => {
                 if (err) return console.error(err)
-                return res.status(StatusCodes.OK).send("Credit score has been pumped up.")
+                return res.status(StatusCodes.OK).send("Credit score has been pumped up by 1.")
             })
         })
     }
