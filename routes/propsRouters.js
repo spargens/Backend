@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { registerProp, deleteProp, delayedProps, returnProps, decommissionProp, propsStatistics, decommissionedProps, recommissionProp, dispatchProp, userPropReview, shiftArray, findAvailableProp, placeOrder, getPropOrder, nightBookingAvailability, placeNightOrder, getPropsOnField, pumpUpCreditScore, timeOfReturn, getStats } = require('../controllers/propsControllers');
+const { registerProp, deleteProp, delayedProps, returnProps, decommissionProp, propsStatistics, decommissionedProps, recommissionProp, dispatchProp, userPropReview, shiftArray, findAvailableProp, placeOrder, getPropOrder, nightBookingAvailability, placeNightOrder, getPropsOnField, pumpUpCreditScore, timeOfReturn, getStats, getCreditScore } = require('../controllers/propsControllers');
 
 router.post('/registerProp', registerProp);
 router.post('/deleteProp', deleteProp);
@@ -23,5 +23,6 @@ router.get('/getPropsOnField', getPropsOnField);
 router.post('/pumpUpCreditScore', pumpUpCreditScore);
 router.post('/timeOfReturn', timeOfReturn);
 router.post('/getStats', getStats);
+router.get('/getCreditScore', getCreditScore);
 
 module.exports = router;

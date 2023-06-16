@@ -767,6 +767,16 @@ const getStats = async (req, res) => {
 }
 
 
+//Controller 18
+const getCreditScore = async (req, res) => {
+    if (req.user.role === "user") {
+        const user = await User.findById(req.user.id);
+        const score = user.credibilityScore;
+        return res.status(StatusCodes.OK).json(score)
+    }
+}
+
+
 //controller to get the decommissioned props
 //req configuration:
 //authorization token in req header
@@ -880,4 +890,4 @@ const propsStatistics = async (req, res) => {
 }
 
 
-module.exports = { registerProp, deleteProp, delayedProps, returnProps, decommissionProp, propsStatistics, decommissionedProps, recommissionProp, dispatchProp, userPropReview, shiftArray, findAvailableProp, placeOrder, getPropOrder, nightBookingAvailability, placeNightOrder, getPropsOnField, pumpUpCreditScore, timeOfReturn, getStats };
+module.exports = { registerProp, deleteProp, delayedProps, returnProps, decommissionProp, propsStatistics, decommissionedProps, recommissionProp, dispatchProp, userPropReview, shiftArray, findAvailableProp, placeOrder, getPropOrder, nightBookingAvailability, placeNightOrder, getPropsOnField, pumpUpCreditScore, timeOfReturn, getStats, getCreditScore };
