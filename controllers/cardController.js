@@ -5,9 +5,9 @@ const Card = require("../models/card");
 
 //Controller 1
 const createCard = async (req, res) => {
-    if (req.user.role === "admin" || req.user.role === "user") {
+    if (req.user.role === "user") {
         const { value, tags } = req.body;
-        const card = await Card.create({ value, tags, creator: req.user.id });
+        const card = await Card.create({ value, tags, creator: req.user.id, time: new Date() });
         User.findById((req.user.id), (err, user) => {
             if (err) return console.error(err);
             user.cards.push(card._id);
@@ -47,7 +47,7 @@ const deleteCard = async (req, res) => {
 
 //Controller 3
 const likeACard = async (req, res) => {
-    if (req.user.role === "admin" || req.user.role === "user") {
+    if (req.user.role === "user") {
         const { cardId, creatorId } = req.body;
         User.findById((req.user.id), (err, user) => {
             if (err) return console.error(err);
@@ -77,7 +77,7 @@ const likeACard = async (req, res) => {
 
 //Controller 4
 const getLikedCards = async (req, res) => {
-    if (req.user.role === "admin" || req.user.role === "user") {
+    if (req.user.role === "user") {
         User.findById((req.user.id), (err, user) => {
             if (err) return console.error(err);
             let likedCards = user.likedCards;
@@ -120,4 +120,86 @@ const getCardsOfUser = async (req, res) => {
     }
 }
 
-module.exports = { createCard, deleteCard, likeACard, getLikedCards, getCardFromId, getCardsOfUser };
+//Controller 7
+const getCardsFromTag = async (req, res) => {
+    const { tag } = req.body;
+    const cards = await Card.find({ tags: new RegExp(tag, "i", "g") }).sort({ time: "-1" });
+    return res.status(StatusCodes.OK).json(cards);
+}
+
+//Controller 8
+const saveInterest = async (req, res) => {
+    if (req.user.role === "user") {
+        const { interests } = req.body;
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            user.interests = interests;
+            user.save((err, update) => {
+                if (err) return console.error(err)
+                return res.status(StatusCodes.OK).send("Successfully updated interests.")
+            })
+        })
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to save interests.")
+    }
+}
+
+//Controller 9
+const getYourInterests = async (req, res) => {
+    if (req.user.role === "user") {
+        let data = { interests: [], name: "", image: "" };
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            data.interests = user.interests;
+            data.name = user.name;
+            data.image = user.image;
+            return res.status(StatusCodes.OK).json(data)
+        })
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to read interests.")
+    }
+}
+
+
+//Controller 10
+const getAllCards = async (req, res) => {
+    const cards = await Card.find({});
+    return res.status(StatusCodes.OK).json(cards);
+}
+
+
+//Controller 11
+const unlikeACard = async (req, res) => {
+    if (req.user.role === "user") {
+        const { cardId } = req.body;
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            let likedCards = user.likedCards;
+            likedCards = likedCards.filter((item) => item !== cardId);
+            user.likedCards = [];
+            user.likedCards = [...likedCards];
+            user.save()
+        })
+        Card.findById((cardId), (err, card) => {
+            if (err) return console.error(err)
+            let likedBy = card.likedBy;
+            likedBy = likedBy.filter((item) => item !== req.user.id);
+            card.likedBy = [];
+            card.likedBy = [...likedBy];
+            card.save((err, update) => {
+                if (err) return console.error(err)
+                return res.status(StatusCodes.OK).send("Successfully disliked the card.")
+            })
+        })
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to dislike a card.");
+    }
+}
+
+
+
+
+module.exports = { createCard, deleteCard, likeACard, getLikedCards, getCardFromId, getCardsOfUser, getCardsFromTag, saveInterest, getYourInterests, getAllCards, unlikeACard };

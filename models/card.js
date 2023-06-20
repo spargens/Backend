@@ -13,6 +13,9 @@ const cardSchema = new mongoose.Schema({
     //[userId]
     likedBy: {
         type: Array
+    },
+    time: {
+        type: String
     }
 })
 

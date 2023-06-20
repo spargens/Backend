@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: Number,
-    default: 0000,
   },
   dob: {
     type: Date,
@@ -128,6 +127,10 @@ const userSchema = new mongoose.Schema({
   },
   //[{contentId,type:enum["community","club","gift","Macbease"],comment}]
   commentedContents: {
+    type: Array
+  },
+  //["Ai and Ml","Universe","Movies"]
+  interests: {
     type: Array
   }
 });
