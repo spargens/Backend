@@ -200,6 +200,26 @@ const unlikeACard = async (req, res) => {
 }
 
 
+//Controller 12
+const getUserBio = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { userId } = req.query;
+        User.findById((userId), (err, user) => {
+            if (err) return console.error(err)
+            let data = { name: "", image: "", course: "", clubsNo: 0 };
+            data.name = user.name;
+            data.image = user.image;
+            data.course = user.course;
+            data.clubsNo = user.communitiesPartOf.length;
+            return res.status(StatusCodes.OK).json(data)
+        })
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to read the bio of user.")
+    }
+}
 
 
-module.exports = { createCard, deleteCard, likeACard, getLikedCards, getCardFromId, getCardsOfUser, getCardsFromTag, saveInterest, getYourInterests, getAllCards, unlikeACard };
+
+
+module.exports = { createCard, deleteCard, likeACard, getLikedCards, getCardFromId, getCardsOfUser, getCardsFromTag, saveInterest, getYourInterests, getAllCards, unlikeACard, getUserBio };

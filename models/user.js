@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
     type: Number,
     required: [true, "Please provide the registration number."],
   },
+  course: {
+    type: String
+  },
   email: {
     type: String,
     required: [true, "Please provide the email id."],
