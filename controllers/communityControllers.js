@@ -3,6 +3,7 @@ const Community = require("../models/community");
 const Admin = require("../models/admin");
 const User = require("../models/user");
 const Content = require("../models/content");
+const community = require("../models/community");
 
 //Controller 1
 const createCommunity = async (req, res) => {
@@ -11,8 +12,9 @@ const createCommunity = async (req, res) => {
         let creatorId = req.user.id;
         let creatorPos = req.user.role;
         let createdOn = new Date();
+        let members = [req.user.id];
         let finalData = {
-            title, cover, secondaryCover, label, creatorId, creatorPos, createdOn, tag
+            title, cover, secondaryCover, label, creatorId, creatorPos, createdOn, tag, members
         };
         Community.create({ ...finalData }, (err, community) => {
             if (err) return console.error(err);
@@ -71,10 +73,11 @@ const joinAsMember = async (req, res) => {
         Community.findById((communityId), (err, community) => {
             if (err) return console.error(err)
             community.members.push(req.user.id);
+            community.activeMembers = community.activeMembers + 1;
             if (req.user.role === "user") {
                 User.findById((req.user.id), (err, user) => {
                     if (err) return console.error(err);
-                    user.communitiesPartOf.push({ communityId, bestStreak: 0, currentStreak: 0, lastPosted: new Date(), totalLikes: 0, totalPosts: 0, rating: 0 });
+                    user.communitiesPartOf.push({ communityId, bestStreak: 0, currentStreak: 0, lastPosted: new Date(), totalLikes: 0, totalPosts: 0, rating: 0, joined: new Date() });
                     user.notifications.push({ key: "community", value: "You have joined the community.", data: communityId });
                     user.save();
                 });
@@ -82,7 +85,7 @@ const joinAsMember = async (req, res) => {
             if (req.user.role === "admin") {
                 Admin.findById((req.user.id), (err, admin) => {
                     if (err) return console.error(err);
-                    admin.communitiesPartOf.push({ communityId, bestStreak: 0, currentStreak: 0, lastPosted: new Date(), totalLikes: 0, totalPosts: 0, rating: 0 });
+                    admin.communitiesPartOf.push({ communityId, bestStreak: 0, currentStreak: 0, lastPosted: new Date(), totalLikes: 0, totalPosts: 0, rating: 0, joined: new Date() });
                     admin.save();
                 })
             }
@@ -107,6 +110,7 @@ const leaveAsMember = async (req, res) => {
             members = members.filter((item) => item !== req.user.id);
             community.members = [];
             community.members.push(...members);
+            community.activeMembers = community.activeMembers + 1;
             if (req.user.role === "user") {
                 User.findById((req.user.id), (err, user) => {
                     if (err) return console.error(err);
@@ -150,7 +154,7 @@ const uploadContent = async (req, res) => {
                 if (item === req.user.id) isMember = true;
             })
             if (isMember) {
-                community.content.push({ contentId, irrelevanceVote: 0, flagSaturated: false, flaggedBy: [] });
+                community.content.push({ contentId, irrelevanceVote: 0, flagSaturated: false, flaggedBy: [], timeStamp: new Date() });
                 if (req.user.role === "user") {
                     User.findById((req.user.id), (err, user) => {
                         if (err) return console.error(err)
@@ -269,7 +273,7 @@ const flag = async (req, res) => {
                         user.save();
                     });
                 }
-                let modifiedContent = { contentId: content.contentId, irrelevanceVote: vote, flagSaturated: flagSaturated, flaggedBy: [...content.flaggedBy, req.user.id] };
+                let modifiedContent = { contentId: content.contentId, irrelevanceVote: vote, flagSaturated: flagSaturated, flaggedBy: [...content.flaggedBy, req.user.id], timeStamp: content.timeStamp };
                 contents.push(modifiedContent);
                 community.content = [];
                 community.content.push(...contents);
@@ -304,6 +308,7 @@ const takeDown = async (req, res) => {
         const { contentId, communityId } = req.body;
         let content = await Content.findById(contentId);
         let senderId = content.idOfSender;
+        let sendBy = content.sendBy;
         Community.findById((communityId), (err, community) => {
             if (err) return console.error(err);
             if (community.creatorId === req.user.id || req.user.role === "admin") {
@@ -311,7 +316,7 @@ const takeDown = async (req, res) => {
                 contents = contents.filter((item) => item.contentId !== contentId);
                 community.content = [];
                 community.content.push(...contents);
-                if (req.user.role === "user") {
+                if (sendBy === "userCommunity") {
                     User.findById((senderId), (err, user) => {
                         if (err) return console.error(err);
                         let contribution = user.communityContribution;
@@ -322,7 +327,7 @@ const takeDown = async (req, res) => {
                         user.save();
                     });
                 }
-                if (req.user.role === "admin") {
+                else {
                     Admin.findById((senderId), (err, admin) => {
                         if (err) return console.error(err);
                         let contribution = admin.communityContribution;
@@ -552,7 +557,7 @@ const rating = async (req, res) => {
 
 //Controller 12
 const getAllCommunities = async (req, res) => {
-    const community = await Community.find();
+    const community = await Community.find({}, { secondaryCover: 1, label: 1, activeMembers: 1, title: 1, tag: 1 });
     return res.status(StatusCodes.OK).json(community);
 }
 
@@ -572,17 +577,22 @@ const getCommunityById = async (req, res) => {
 //Controller 14
 const getCommunityByTag = async (req, res) => {
     const { tag } = req.query;
-    console.log(tag);
-    const community = await Community.aggregate({
-        "$search": {
-            "index": "tag",
-            "text": {
-                "query": "Sports",
-                "path": "tag"
-            }
-        }
-    });
-    return res.status(StatusCodes.OK).json(community);
+    const communities = await Community.find({ tags: new RegExp(tag, "i", "g") }, { secondaryCover: 1, title: 1, tag: 1, activeMembers: 1, label: 1 });
+    if (req.user.role === "user") {
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            user.lastActive = new Date();
+            user.save()
+        })
+    }
+    else if (req.user.role === "admin") {
+        Admin.findById((req.user.id), (err, admin) => {
+            if (err) return console.error(err)
+            admin.lastActive = new Date();
+            admin.save()
+        })
+    }
+    return res.status(StatusCodes.OK).json(communities);
 }
 
 //Controller 15
@@ -624,5 +634,145 @@ const getContentOfACommunity = async (req, res) => {
     return res.status(StatusCodes.OK).json(contents);
 }
 
+//Controller 17
+const getCommunitiesPartOf = async (req, res) => {
+    if (req.user.role === "user") {
+        User.findById((req.user.id), (err, user) => {
+            if (err) return console.error(err)
+            return res.status(StatusCodes.OK).json(user.communitiesPartOf)
+        })
+    }
+    else if (req.user.role === "admin") {
+        Admin.findById((req.user.id), (err, admin) => {
+            if (err) return console.error(err)
+            return res.status(StatusCodes.OK).json(admin.communitiesPartOf)
+        })
+    }
+}
 
-module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity };
+//Controller 18
+const getLatestContent = async (req, res) => {
+    const { communityId } = req.query;
+    if (req.user.role === "user") {
+        const user = await User.findById(req.user.id);
+        let lastActive = user.lastActive;
+        lastActive = new Date(lastActive);
+        let arr = [];
+        Community.findById((communityId), (err, community) => {
+            if (err) return console.error(err)
+            let contents = community.content;
+            for (let i = 0; i < contents.length; i++) {
+                let content = contents[i];
+                if (lastActive - new Date(content.timeStamp) < 0)
+                    arr.push(content);
+            }
+            return res.status(StatusCodes.OK).json(arr);
+        })
+    }
+    else if (req.user.role === "admin") {
+        const admin = await Admin.findById(req.user.id);
+        let lastActive = admin.lastActive;
+        lastActive = new Date(lastActive);
+        let arr = [];
+        Community.findById((communityId), (err, community) => {
+            if (err) return console.error(err)
+            let contents = community.content;
+            for (let i = 0; i < contents.length; i++) {
+                let content = contents[i];
+                if (lastActive - new Date(content.timeStamp) < 0)
+                    arr.push(content);
+            }
+            return res.status(StatusCodes.OK).json(arr);
+        })
+    }
+}
+
+
+//Controller 19
+const getCommunityProfile = async (req, res) => {
+    const { communityId } = req.query;
+    const community = await Community.findById((communityId), { title: 1, secondaryCover: 1, _id: 0 })
+    return res.status(StatusCodes.OK).json(community)
+}
+
+//Controller 20
+const getUserProfile = async (req, res) => {
+    const { userId } = req.query;
+    if (req.user.role === "user") {
+        let user = await User.findById((userId), { image: 1, name: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(user)
+    }
+    else if (req.user.role === "admin") {
+        let user = await Admin.findById((userId), { image: 1, name: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(user)
+    }
+
+}
+
+//Controller 21
+const getLikeAndFlagStatus = async (req, res) => {
+    const { contentId, communityId } = req.query;
+    const content = await Content.findById((contentId), { likes: 1, _id: 0 });
+    let liked = content.likes.includes(req.user.id);
+    const communityData = await Community.findById((communityId), { content: 1, _id: 0 });
+    let concernedData = communityData.content.find((item) => item.contentId === contentId);
+    let flaggedBy = concernedData.flaggedBy;
+    let flagged = flaggedBy.includes(req.user.id);
+    return res.status(StatusCodes.OK).json({ liked, flagged })
+}
+
+//Controller 22
+const getBasicCommunityDataFromId = async (req, res) => {
+    const { communityId } = req.query;
+    const community = await Community.findById((communityId), { secondaryCover: 1, title: 1, tag: 1, activeMembers: 1 });
+    return res.status(StatusCodes.OK).json(community)
+}
+
+//Controller 23
+const getUserContributionCover = async (req, res) => {
+    const { communityId } = req.query;
+    if (req.user.role === "user") {
+        let partOf = await User.findById((req.user.id), {
+            communitiesPartOf: 1, _id: 0
+        });
+        let user = partOf.communitiesPartOf.find((item) => item.communityId === communityId);
+        return res.status(StatusCodes.OK).json(user)
+    }
+    else if (req.user.role === "admin") {
+        let partOf = await Admin.findById((req.user.id), {
+            communitiesPartOf: 1, _id: 0
+        });
+        let user = partOf.communitiesPartOf.find((item) => item.communityId === communityId);
+        return res.status(StatusCodes.OK).json(user)
+    }
+
+}
+
+//Controller 24
+const getContribution = async (req, res) => {
+    const { communityId } = req.query;
+    if (req.user.role === "user") {
+        let communityContribution = await User.findById((req.user.id), {
+            communityContribution: 1, _id: 0
+        });
+        communityContribution = communityContribution.communityContribution;
+        communityContribution = communityContribution.filter(item => item.communityId === communityId);
+        return res.status(StatusCodes.OK).json(communityContribution)
+    }
+    else if (req.user.role === "admin") {
+        let communityContribution = await Admin.findById((req.user.id), {
+            communityContribution: 1, _id: 0
+        });
+        communityContribution = communityContribution.communityContribution;
+        communityContribution = communityContribution.filter(item => item.communityId === communityId);
+        return res.status(StatusCodes.OK).json(communityContribution)
+    }
+
+}
+
+
+
+
+
+
+module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution };

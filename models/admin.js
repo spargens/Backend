@@ -68,6 +68,9 @@ const adminSchema = new mongoose.Schema({
     //[url]
     thrashUrls: {
         type: Array
+    },
+    lastActive: {
+        type: String
     }
 });
 

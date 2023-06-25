@@ -5,7 +5,7 @@ const User = require("../models/user");
 
 //Controller 1
 const createContent = async (req, res) => {
-    const { contentType, sendBy, url, text, belongsTo } = req.body;
+    const { contentType, sendBy, url, text, belongsTo, tags } = req.body;
     if (!contentType || !sendBy || !url || !text || !belongsTo) return res.status(StatusCodes.OK).send("Incomplete data.");
     let idOfSender = req.user.id;
     let data = { ...req.body, idOfSender };
@@ -185,7 +185,6 @@ const deleteContent = async (req, res) => {
 //Controller 7
 const getContent = async (req, res) => {
     const { contentId } = req.query;
-    console.log(contentId);
     const content = await Content.findById(contentId);
     if (content) {
         return res.status(StatusCodes.OK).json(content);
@@ -195,4 +194,11 @@ const getContent = async (req, res) => {
     }
 }
 
-module.exports = { createContent, likeContent, comment, unlikeContent, deleteComment, deleteContent, getContent };
+//Controller 8
+const getComments = async (req, res) => {
+    const { contentId } = req.query;
+    const content = await Content.findById((contentId), { comments: 1, _id: 0 });
+    return res.status(StatusCodes.OK).json(content);
+}
+
+module.exports = { createContent, likeContent, comment, unlikeContent, deleteComment, deleteContent, getContent, getComments };

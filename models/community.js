@@ -33,6 +33,10 @@ const communitySchema = new mongoose.Schema({
     //["sports","coding"]
     tag: {
         type: Array
+    },
+    activeMembers: {
+        type: Number,
+        default: 0
     }
 });
 

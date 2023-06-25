@@ -23,6 +23,7 @@ const cardRouter = require("./routes/cardRouter");
 const bagRouter = require("./routes/bagRouter");
 const communityRouter = require("./routes/communityRouter");
 const contentRouter = require("./routes/contentRouter");
+const tileRouter = require("./routes/tileRouter");
 
 app.use(cors());
 app.use(express.json());
@@ -48,6 +49,7 @@ app.use("/api/v1/card", authenticate, cardRouter);
 app.use("/api/v1/bag", authenticate, bagRouter);
 app.use("/api/v1/community", authenticate, communityRouter);
 app.use("/api/v1/content", authenticate, contentRouter);
+app.use("/api/v1/tile", authenticate, tileRouter);
 
 const port = process.env.PORT || 5050;
 

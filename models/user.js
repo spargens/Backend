@@ -135,6 +135,9 @@ const userSchema = new mongoose.Schema({
   //["Ai and Ml","Universe","Movies"]
   interests: {
     type: Array
+  },
+  lastActive: {
+    type: String
   }
 });
 

@@ -29,7 +29,7 @@ const contentSchema = new mongoose.Schema({
         enum: ["userGift", "club", "Macbease", "userGift", "admin", "userCommunity"],
         required: [true, "Please provide who send the content."]
     },
-    //name of the community or club it belongs to
+    //id of the community or club it belongs to
     belongsTo: {
         type: String
     },
