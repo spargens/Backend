@@ -637,16 +637,12 @@ const getContentOfACommunity = async (req, res) => {
 //Controller 17
 const getCommunitiesPartOf = async (req, res) => {
     if (req.user.role === "user") {
-        User.findById((req.user.id), (err, user) => {
-            if (err) return console.error(err)
-            return res.status(StatusCodes.OK).json(user.communitiesPartOf)
-        })
+        const user = await User.findById((req.user.id), { communitiesPartOf: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(user)
     }
     else if (req.user.role === "admin") {
-        Admin.findById((req.user.id), (err, admin) => {
-            if (err) return console.error(err)
-            return res.status(StatusCodes.OK).json(admin.communitiesPartOf)
-        })
+        const user = await Admin.findById((req.user.id), { communitiesPartOf: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(user)
     }
 }
 
@@ -711,14 +707,19 @@ const getUserProfile = async (req, res) => {
 
 //Controller 21
 const getLikeAndFlagStatus = async (req, res) => {
-    const { contentId, communityId } = req.query;
-    const content = await Content.findById((contentId), { likes: 1, _id: 0 });
-    let liked = content.likes.includes(req.user.id);
-    const communityData = await Community.findById((communityId), { content: 1, _id: 0 });
-    let concernedData = communityData.content.find((item) => item.contentId === contentId);
-    let flaggedBy = concernedData.flaggedBy;
-    let flagged = flaggedBy.includes(req.user.id);
-    return res.status(StatusCodes.OK).json({ liked, flagged })
+    if (req.user.role === "admin" || req.user.role === "user") {
+        const { contentId, communityId } = req.query;
+        const content = await Content.findById((contentId), { likes: 1, _id: 0 });
+        let liked = content.likes.includes(req.user.id);
+        const communityData = await Community.findById((communityId), { content: 1, _id: 0 });
+        let concernedData = communityData.content.find((item) => item.contentId === contentId);
+        let flaggedBy = concernedData.flaggedBy;
+        let flagged = flaggedBy.includes(req.user.id);
+        return res.status(StatusCodes.OK).json({ liked, flagged })
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to get the like and flag status. ");
+    }
 }
 
 //Controller 22
@@ -771,8 +772,15 @@ const getContribution = async (req, res) => {
 }
 
 
+//Controller 25
+const getAllTags = async (req, res) => {
+    const communities = await Community.find({}, { tag: 1, _id: 0 })
+    return res.status(StatusCodes.OK).json(communities)
+}
 
 
 
 
-module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution };
+
+
+module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution, getAllTags };
