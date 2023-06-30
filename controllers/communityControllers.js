@@ -779,8 +779,23 @@ const getAllTags = async (req, res) => {
 }
 
 
+//Controller 26
+const getLikedPosts = async (req, res) => {
+    let user = await User.findById((req.user.id), { likedContents: 1, _id: 0 });
+    user = user.likedContents;
+    let data = [];
+    for (let i = 0; i < user.length; i++) {
+        let likedContent = user[i];
+        if (likedContent.type === "community") {
+            data.push(likedContent.contentId)
+        }
+    }
+    return res.status(StatusCodes.OK).json(data)
+}
 
 
 
 
-module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution, getAllTags };
+
+
+module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution, getAllTags, getLikedPosts };

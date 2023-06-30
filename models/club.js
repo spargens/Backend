@@ -8,9 +8,15 @@ const clubSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please provide the motto of the club.']
     },
+    tags: {
+        type: Array
+    },
     featuringImg: {
         type: String,
         required: [true, 'Please provide the motto of the club.']
+    },
+    secondaryImg: {
+        type: String
     },
     //array of objects {url:"xyz.com",id:"ff232"}
     gallery: {
@@ -29,19 +35,11 @@ const clubSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please provide the message of the chief.']
     },
-    //array of objects {id:"r3039fjf",url:"url",name:"eventName2023",description:"OneLiner",contacts:[{"contactId":"xyz123"}],place:"sdma",time:"tomorrow 3pm to 5pm"}
+    //array of objects {id:"r3039fjf",url:"url",name:"eventName2023",description:"OneLiner",place:"sdma",time:"tomorrow 3pm to 5pm",postedBy:"idOfAdmin"}
     upcomingEvent: {
         type: Array
     },
-    //array of objects {id:"f34f2w",url:"url",msg:"string one para",contactId:"idMacbease"}
-    featuringMember: {
-        type: Array
-    },
-    //array of urls [{url,id}]
-    workSpacePhotos: {
-        type: Array
-    },
-    //array of objects {id:"f34ef23",url:"url",pos:"ceo",contactId:"idMacbease"}
+    //array of objects {id:"f34ef23",pos:"ceo"}
     team: {
         type: Array
     },
@@ -80,6 +78,10 @@ const clubSchema = new mongoose.Schema({
     visible: {
         type: Boolean,
         default: true
+    },
+    //[{contentId:"",postedBy:"adminId"}]
+    content: {
+        type: Array
     }
 });
 
