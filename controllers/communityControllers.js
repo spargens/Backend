@@ -794,8 +794,83 @@ const getLikedPosts = async (req, res) => {
 }
 
 
+//Controller 27
+const getFastFeed = async (req, res) => {
+    if (req.user.role === "user") {
+        const user = await User.findById((req.user.id), { communitiesPartOf: 1, lastActive: 1, _id: 0 });
+        let communities = user.communitiesPartOf;
+        let lastActive = user.lastActive;
+        lastActive = new Date(lastActive);
+        let len = communities.length;
+        let totalContent = [];
+        for (let i = 0; i < len; i++) {
+            let communityId = communities[i].communityId;
+            let contents = await Community.findById((communityId), { content: 1, _id: 0 });
+            contents = contents.content;
+            totalContent.push(...contents);
+        }
+        let finalContent = [];
+        for (let j = 0; j < totalContent.length; j++) {
+            let content = totalContent[j];
+            if (lastActive - new Date(content.timeStamp) < 0) {
+                finalContent.push(content)
+            }
+        }
+        let actualContent = [];
+        for (let k = 0; k < finalContent.length; k++) {
+            let contentId = finalContent[k].contentId;
+            let irrelevanceVote = finalContent[k].irrelevanceVote;
+            let actualData = await Content.findById((contentId));
+            actualData = actualData._doc
+            let data = { irrelevanceVote, ...actualData };
+            actualContent.push(data)
+        }
+        let finishedContent = [];
+        for (let l = 0; l < actualContent.length; l++) {
+            let data = actualContent[l];
+            let userId = data.idOfSender;
+            let communityId = data.belongsTo;
+            let user = await User.findById((userId), { image: 1, name: 1, _id: 0 });
+            let community = await Community.findById((communityId), { title: 1, secondaryCover: 1, _id: 0 })
+            let withPicData = { ...data, userName: user.name, userPic: user.image, communityTitle: community.title, communityCover: community.secondaryCover }
+            finishedContent.push(withPicData);
+        }
+
+        return res.status(StatusCodes.OK).json({ finishedContent, lastActive })
+    }
+}
+
+//Controller 28
+const getFastNativeFeed = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { communityId } = req.query;
+        const community = await Community.findById((communityId), { content: 1, _id: 0 });
+        let contents = community.content;
+        let actualContent = [];
+        for (let k = 0; k < contents.length; k++) {
+            let contentId = contents[k].contentId;
+            let actualData = await Content.findById((contentId));
+            actualData = actualData._doc;
+            let data = { ...actualData };
+            actualContent.push(data)
+        }
+        let finishedContent = [];
+        for (let l = 0; l < actualContent.length; l++) {
+            let data = actualContent[l];
+            let userId = data.idOfSender;
+            let communityId = data.belongsTo;
+            let user = await User.findById((userId), { image: 1, name: 1, _id: 0 });
+            let community = await Community.findById((communityId), { title: 1, secondaryCover: 1, _id: 0 })
+            let withPicData = { ...data, userName: user.name, userPic: user.image, communityTitle: community.title, communityCover: community.secondaryCover }
+            finishedContent.push(withPicData);
+        }
+        return res.status(StatusCodes.OK).json({ finishedContent })
+    }
+}
 
 
 
 
-module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution, getAllTags, getLikedPosts };
+
+
+module.exports = { createCommunity, deleteCommunity, joinAsMember, leaveAsMember, uploadContent, deleteContent, flag, takeDown, updateStreak, likesAndPosts, rating, getAllCommunities, getCommunityById, getCommunityByTag, isMember, getContentOfACommunity, getCommunitiesPartOf, getLatestContent, getCommunityProfile, getUserProfile, getLikeAndFlagStatus, getBasicCommunityDataFromId, getUserContributionCover, getContribution, getAllTags, getLikedPosts, getFastFeed, getFastNativeFeed };

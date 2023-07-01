@@ -8,9 +8,7 @@ const Content = require("../models/content");
 //Middleware
 
 const checkAuthorization = async (clubId, id) => {
-    console.log("fred");
     const club = await Club.findById((clubId));
-    console.log(club)
     if (club) {
         if (club.mainAdmin === id) return "Fully-authorized";
         let admins = club.adminId;
@@ -480,10 +478,10 @@ const removeContent = async (req, res) => {
 //Controller 13
 const postGallery = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
-        let { clubId, url, id } = req.body;
+        let { clubId, url, id, desc } = req.body;
         const isAuthorized = await checkAuthorization(clubId, req.user.id);
         if (isAuthorized === "Fully-authorized" || isAuthorized === "Authorized") {
-            let data = { url, id, postedBy: req.user.id };
+            let data = { url, id, postedBy: req.user.id, desc };
             Club.findById((clubId), (err, club) => {
                 if (err) return console.error(err)
                 club.gallery.push(data);
@@ -586,35 +584,11 @@ const deleteNotifications = async (req, res) => {
 //Controller 17
 const editProfile = async (req, res) => {
     if (req.user.role === "user" || req.user.role === "admin") {
-        const { clubId, field, data } = req.body;
+        const { clubId, data } = req.body;
         const isAuthorized = await checkAuthorization(clubId, req.user.id);
         if (isAuthorized === "Fully-authorized") {
-            Club.findById((clubId), (err, club) => {
-                if (err) return console.error(err)
-                if (field === "name") {
-                    club.name = data;
-                }
-                else if (field === "motto") {
-                    club.motto = data;
-                }
-                else if (field === "featuringImg") {
-                    club.featuringImg = data;
-                }
-                else if (field === "chiefImage") {
-                    club.chiefImage = data;
-                }
-                else if (field === "chiefMsg") {
-                    club.chiefMsg = data;
-                }
-                else if (field === "tags") {
-                    club.tags = [];
-                    club.tags = [...data]
-                }
-                club.save((err, update) => {
-                    if (err) return console.error(err)
-                    return res.status(StatusCodes.OK).send("Profile successfully updated!")
-                })
-            })
+            const club = await Club.findByIdAndUpdate((clubId), { ...data });
+            return res.status(StatusCodes.OK).send("Successfully updated!")
         }
         else {
             return res.status(StatusCodes.OK).send("You have to be main admin to edit the profile.")
@@ -738,12 +712,9 @@ const receivePayment = async (req, res) => {
 //Controller 16
 const getAllEvents = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
-        const { clubId } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err);
-            let data = club.upcomingEvent;
-            return res.status(StatusCodes.OK).json(data);
-        })
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { _id: 0, upcomingEvent: 1 });
+        return res.status(StatusCodes.OK).json(club)
     }
     else {
         return res.status(StatusCodes.OK).send("You are not authorized to access the events of the club.")
@@ -753,12 +724,9 @@ const getAllEvents = async (req, res) => {
 //Controller 17
 const getAllMembers = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
-        const { clubId } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err);
-            let data = club.members;
-            return res.status(StatusCodes.OK).json(data);
-        })
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { members: 1, _id: 0 })
+        return res.status(StatusCodes.OK).json(club)
     }
     else {
         return res.status(StatusCodes.OK).send("You are not authorized to access the members of the club.")
@@ -897,6 +865,220 @@ const getClubProfile = async (req, res) => {
     return res.status(StatusCodes.OK).json(club)
 }
 
+//Controller 26
+const updateRating = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        Club.findById((clubId), (err, club) => {
+            if (err) return console.error(err)
+            let members = club.members.length;
+            let gallery = club.gallery.length;
+            let events = club.upcomingEvent.length;
+            let content = club.content.length;
+            let rating = Math.floor(13.5 * (members + gallery + events + content));
+            club.rating = rating;
+            club.save((err, update) => {
+                if (err) return console.error(err)
+                return res.status(StatusCodes.OK).send("Updated rating!")
+            })
+        })
+    }
+}
+
+//Controller 27
+const getClubBio = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        let data = {
+            featuringImg: "",
+            motto: "",
+            createdOn: "",
+            totalMembers: "",
+            totalEvents: "",
+            ranking: "",
+            team: [],
+            tag: []
+        };
+        Club.findById((clubId), (err, club) => {
+            if (err) return console.error(err)
+            data.totalMembers = club.members.length;
+            data.totalEvents = club.upcomingEvent.length;
+            data.ranking = club.rating;
+            data.featuringImg = club.featuringImg;
+            data.motto = club.motto;
+            data.team = club.team;
+            data.tag = club.tags;
+            club.save((err, update) => {
+                if (err) return console.error(err)
+                return res.status(StatusCodes.OK).json(data)
+            })
+        })
+    }
+}
+
+//Controller 28
+const getClubContent = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { content: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(club)
+    }
+}
+
+//Controller 29
+const getClubGallery = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { gallery: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(club)
+    }
+}
+
+//Controller 30
+const isAdmin = async (req, res) => {
+    const { clubId } = req.query;
+    let club = await Club.findById((clubId), { adminId: 1, _id: 0 });
+    let admin = club.adminId;
+    let result = admin.includes(req.user.id)
+    return res.status(StatusCodes.OK).json(result)
+}
+
+//Controller 31
+const isMember = async (req, res) => {
+    const { clubId } = req.query;
+    let club = await Club.findById((clubId), { members: 1, _id: 0 });
+    let members = club.members;
+    let result = members.includes(req.user.id)
+    return res.status(StatusCodes.OK).json(result)
+}
+
+//Controller 32
+const getClubNotifications = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { _id: 0, notifications: 1 });
+        return res.status(StatusCodes.OK).json(club)
+    }
+}
+
+//Controller 33
+const getAllAdmins = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { _id: 0, adminId: 1 });
+        return res.status(StatusCodes.OK).json(club)
+    }
+}
+
+//Controller 34
+const getAllTeamMembers = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { _id: 0, team: 1 });
+        return res.status(StatusCodes.OK).json(club)
+    }
+}
+
+//Controller 35
+const isMainAdmin = async (req, res) => {
+    const { clubId } = req.query;
+    const isAuthorized = await checkAuthorization(clubId, req.user.id);
+    if (isAuthorized === "Fully-authorized") {
+        return res.status(StatusCodes.OK).send(true)
+    }
+    else {
+        return res.status(StatusCodes.OK).send(false)
+    }
+}
+
+//Controller 36
+const getCreatorId = async (req, res) => {
+    const { clubId } = req.query;
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const club = await Club.findById((clubId), { mainAdmin: 1, _id: 0 });
+        return res.status(StatusCodes.OK).json(club)
+    }
+}
+
+//Controller 37
+const getFastFeed = async (req, res) => {
+    if (req.user.role === "user") {
+        const user = await User.findById((req.user.id), { clubs: 1, lastActive: 1, _id: 0 });
+        let clubs = user.clubs;
+        let lastActive = user.lastActive;
+        lastActive = new Date(lastActive);
+        let len = clubs.length;
+        let totalContent = [];
+        for (let i = 0; i < len; i++) {
+            let clubId = clubs[i];
+            let contents = await Club.findById((clubId), { content: 1, _id: 0 });
+            contents = contents.content;
+            totalContent.push(...contents);
+        }
+        let finalContent = [];
+        for (let j = 0; j < totalContent.length; j++) {
+            let content = totalContent[j];
+            if (lastActive - new Date(content.timeStamp) < 0) {
+                finalContent.push(content)
+            }
+        }
+        let actualContent = [];
+        for (let k = 0; k < finalContent.length; k++) {
+            let contentId = finalContent[k].contentId;
+            let actualData = await Content.findById((contentId));
+            actualData = actualData._doc;
+            let data = { ...actualData };
+            actualContent.push(data)
+        }
+        let finishedContent = [];
+        for (let l = 0; l < actualContent.length; l++) {
+            let data = actualContent[l];
+            let userId = data.idOfSender;
+            let clubId = data.belongsTo;
+            let user = await User.findById((userId), { image: 1, name: 1, _id: 0 });
+            let club = await Club.findById((clubId), { name: 1, secondaryImg: 1, _id: 0 });
+            let withPicData = { ...data, userName: user.name, userPic: user.image, clubTitle: club.name, communityCover: club.secondaryImg };
+            finishedContent.push(withPicData);
+        }
+        return res.status(StatusCodes.OK).json({ finishedContent, lastActive })
+    }
+}
+
+//Controller 38
+const getStatus = async (req, res) => {
+    const { clubId } = req.query;
+    const isAuthorized = await checkAuthorization(clubId, req.user.id);
+    const isMember = await checkIsMember(clubId, req.user.id);
+    return res.status(StatusCodes.OK).json({ isAuthorized, isMember })
+}
+
+//Controller 39
+const getFastNativeFeed = async (req, res) => {
+    if (req.user.role === "user" || req.user.role === "admin") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { content: 1, _id: 0 });
+        let contents = club.content;
+        let actualContent = [];
+        for (let k = 0; k < contents.length; k++) {
+            let contentId = contents[k].contentId;
+            let actualData = await Content.findById((contentId));
+            actualData = actualData._doc;
+            let data = { ...actualData };
+            actualContent.push(data)
+        }
+        let finishedContent = [];
+        for (let l = 0; l < actualContent.length; l++) {
+            let data = actualContent[l];
+            let userId = data.idOfSender;
+            let clubId = data.belongsTo;
+            let user = await User.findById((userId), { image: 1, name: 1, _id: 0 });
+            let club = await Club.findById((clubId), { name: 1, secondaryImg: 1, _id: 0 });
+            let withPicData = { ...data, userName: user.name, userPic: user.image, clubTitle: club.name, communityCover: club.secondaryImg };
+            finishedContent.push(withPicData);
+        }
+        return res.status(StatusCodes.OK).json({ finishedContent })
+    }
+}
 
 
 
@@ -905,5 +1087,7 @@ module.exports = {
     createClub, deleteClub, joinAsMember, leaveAsMember, addAsMember, removeAsMember, addAdmin, removeAdmin,
     addNotifications, deleteNotifications, changeTier, receivePayment, getAllEvents, getAllMembers, getClub, setVisibility,
     getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember,
-    removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile
+    removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile, updateRating, getClubBio,
+    getClubContent, getClubGallery, isAdmin, isMember, getClubNotifications, getAllAdmins, getAllTeamMembers, isMainAdmin,
+    getCreatorId, getFastFeed, getStatus, getFastNativeFeed
 }

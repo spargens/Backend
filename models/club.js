@@ -18,7 +18,7 @@ const clubSchema = new mongoose.Schema({
     secondaryImg: {
         type: String
     },
-    //array of objects {url:"xyz.com",id:"ff232"}
+    //array of objects {url:"xyz.com",id:"ff232",desc:""}
     gallery: {
         type: Array
     },
@@ -82,6 +82,9 @@ const clubSchema = new mongoose.Schema({
     //[{contentId:"",postedBy:"adminId"}]
     content: {
         type: Array
+    },
+    rating: {
+        type: Number
     }
 });
 

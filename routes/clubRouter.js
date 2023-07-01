@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { createClub, deleteClub, joinAsMember, leaveAsMember, addAsMember, removeAsMember, addAdmin, removeAdmin, addNotifications, deleteNotifications, changeTier, receivePayment, getAllEvents, getAllMembers, getClub, setVisibility, getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember, removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile } = require("../controllers/clubControllers");
+const { createClub, deleteClub, joinAsMember, leaveAsMember, addAsMember, removeAsMember, addAdmin, removeAdmin, addNotifications, deleteNotifications, changeTier, receivePayment, getAllEvents, getAllMembers, getClub, setVisibility, getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember, removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile, updateRating, getClubBio, getClubContent, getClubGallery, isAdmin, isMember, getClubNotifications, getAllAdmins, getAllTeamMembers, isMainAdmin, getCreatorId, getFastFeed, getStatus, getFastNativeFeed } = require("../controllers/clubControllers");
 
 router.post('/createClub', createClub);
 router.post('/deleteClub', deleteClub);
@@ -15,8 +15,8 @@ router.post('/addNotifications', addNotifications);
 router.post('/deleteNotifications', deleteNotifications);
 router.post('/changeTier', changeTier);
 router.post('/receivePayment', receivePayment);
-router.post('/getAllEvents', getAllEvents);
-router.post('/getAllMembers', getAllMembers);
+router.get('/getAllEvents', getAllEvents);
+router.get('/getAllMembers', getAllMembers);
 router.post('/getClub', getClub);
 router.post('/setVisibility', setVisibility);
 router.post('/getAllClub', getAllClub);
@@ -34,5 +34,19 @@ router.get('/getLikeStatus', getLikeStatus);
 router.get('/getLatestContent', getLatestContent);
 router.get('/getClubsPartOf', getClubsPartOf);
 router.get('/getClubProfile', getClubProfile);
+router.get('/updateRating', updateRating);
+router.get('/getClubBio', getClubBio);
+router.get('/getClubContent', getClubContent);
+router.get('/getClubGallery', getClubGallery);
+router.get('/isAdmin', isAdmin);
+router.get('/isMember', isMember);
+router.get('/getClubNotifications', getClubNotifications);
+router.get('/getAllAdmins', getAllAdmins);
+router.get('/getAllTeamMembers', getAllTeamMembers);
+router.get('/isMainAdmin', isMainAdmin);
+router.get('/getCreatorId', getCreatorId);
+router.get('/getFastFeed', getFastFeed);
+router.get('/getStatus', getStatus);
+router.get('/getFastNativeFeed', getFastNativeFeed);
 
 module.exports = router;
