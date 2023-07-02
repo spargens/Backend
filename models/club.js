@@ -62,22 +62,9 @@ const clubSchema = new mongoose.Schema({
     mainAdmin: {
         type: String
     },
-    tier: {
-        type: String,
-        enum: ["Basic", "Advance", "Pro"],
-        default: "Basic"
-    },
-    payment: {
-        type: Object,
-        default: { dueDate: null, amt: 0 }
-    },
     //[{id:"",msg:""}]
     notifications: {
         type: Array
-    },
-    visible: {
-        type: Boolean,
-        default: true
     },
     //[{contentId:"",postedBy:"adminId"}]
     content: {

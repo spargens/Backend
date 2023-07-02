@@ -263,35 +263,30 @@ const removeAsMember = async (req, res) => {
         const { clubId, userId } = req.body;
         const id = req.user.id;
         const isAuthorized = await checkAuthorization(clubId, id);
-        if (isAuthorized === "Fully-authorized" || isAuthorized === "Authorized") {
+        if (isAuthorized === "Fully-authorized") {
             Club.findById((clubId), (err, club) => {
                 if (err) return console.error(err);
-                if (club) {
-                    User.findById((userId), (err, user) => {
-                        if (err) return console.error(err);
-                        let clubs = user.clubs;
-                        clubs = clubs.filter((item) => { item !== clubId });
-                        user.clubs = [];
-                        user.clubs = clubs;
-                        user.save();
-                    });
-                    let clubMembers = club.members;
-                    clubMembers = clubMembers.filter((item) => item !== userId);
-                    club.members = [];
-                    club.members = clubMembers;
-                    let len = club.xAxisData.length;
-                    let lastElement = club.xAxisData[len - 1];
-                    let newElement = lastElement - 1;
-                    club.xAxisData.push(newElement);
-                    club.yAxisData.push(new Date());
-                    club.save((err, update) => {
-                        if (err) return console.error(err);
-                        return res.status(StatusCodes.OK).send("Successfully removed the member of the club.")
-                    });
-                }
-                else {
-                    return res.status(StatusCodes.OK).send("No such club found.");
-                }
+                User.findById((userId), (err, user) => {
+                    if (err) return console.error(err);
+                    let clubs = user.clubs;
+                    clubs = clubs.filter((item) => { item !== clubId });
+                    user.clubs = [];
+                    user.clubs = clubs;
+                    user.save();
+                });
+                let clubMembers = club.members;
+                clubMembers = clubMembers.filter((item) => item !== userId);
+                club.members = [];
+                club.members = clubMembers;
+                let len = club.xAxisData.length;
+                let lastElement = club.xAxisData[len - 1];
+                let newElement = lastElement - 1;
+                club.xAxisData.push(newElement);
+                club.yAxisData.push(new Date());
+                club.save((err, update) => {
+                    if (err) return console.error(err);
+                    return res.status(StatusCodes.OK).send("Successfully removed the member of the club.")
+                });
             })
         }
         if (isAuthorized === "Not-authorized") {
@@ -400,12 +395,11 @@ const postEvent = async (req, res) => {
 const removeEvent = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
         const { clubId, eventId } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err)
-            let events = club.upcomingEvent;
-            let mainAdmin = club.mainAdmin;
-            let event = events.find((item) => item.id === eventId);
-            if (event.postedBy === req.user.id || mainAdmin === req.user.id) {
+        const isAuthorized = await checkAuthorization(clubId, req.user.id);
+        if (isAuthorized === "Fully-authorized" || isAuthorized === "Authorized") {
+            Club.findById((clubId), (err, club) => {
+                if (err) return console.error(err)
+                let events = club.upcomingEvent;
                 events = events.filter((item) => item.id !== eventId)
                 club.upcomingEvent = [];
                 club.upcomingEvent = [...events];
@@ -413,11 +407,12 @@ const removeEvent = async (req, res) => {
                     if (err) return console.error(err)
                     return res.status(StatusCodes.OK).send("Successfully removed event!")
                 })
-            }
-            else {
-                return res.status(StatusCodes.OK).send("Not authorized to remove event!")
-            }
-        })
+            })
+        }
+        else {
+            return res.status(StatusCodes.OK).send("You have to be admin to remove an event.")
+        }
+
     }
     else {
         return res.status(StatusCodes.OK).send("You are not authorized to access this route of removing an event.")
@@ -453,12 +448,11 @@ const postContent = async (req, res) => {
 const removeContent = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
         const { clubId, contentId } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err)
-            let contents = club.content;
-            let mainAdmin = club.mainAdmin;
-            let content = contents.find((item) => item.contentId === contentId);
-            if (content.postedBy === req.user.id || mainAdmin === req.user.id) {
+        const isAuthorized = await checkAuthorization(clubId, req.user.id);
+        if (isAuthorized === "Fully-authorized" || isAuthorized === "Authorized") {
+            Club.findById((clubId), (err, club) => {
+                if (err) return console.error(err)
+                let contents = club.content;
                 contents = contents.filter((item) => item.contentId !== contentId)
                 club.content = [];
                 club.content = [...contents];
@@ -466,11 +460,14 @@ const removeContent = async (req, res) => {
                     if (err) return console.error(err)
                     return res.status(StatusCodes.OK).send("Successfully removed content!")
                 })
-            }
-            else {
-                return res.status(StatusCodes.OK).send("Not authorized to remove content!")
-            }
-        })
+            })
+        }
+        else {
+            return res.status(StatusCodes.OK).send("You have to be admin to remove a content.")
+        }
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to access this route of removing a content.")
     }
 }
 
@@ -504,12 +501,11 @@ const postGallery = async (req, res) => {
 const removeGallery = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
         const { clubId, id } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err)
-            let gallery = club.gallery;
-            let mainAdmin = club.mainAdmin;
-            let image = gallery.find((item) => item.id === id);
-            if (image.postedBy === req.user.id || mainAdmin === req.user.id) {
+        const isAuthorized = await checkAuthorization(clubId, req.user.id);
+        if (isAuthorized === "Fully-authorized" || isAuthorized === "Authorized") {
+            Club.findById((clubId), (err, club) => {
+                if (err) return console.error(err)
+                let gallery = club.gallery;
                 gallery = gallery.filter((item) => item.id !== id)
                 club.gallery = [];
                 club.gallery = [...gallery];
@@ -517,11 +513,11 @@ const removeGallery = async (req, res) => {
                     if (err) return console.error(err)
                     return res.status(StatusCodes.OK).send("Successfully removed from gallery!")
                 })
-            }
-            else {
-                return res.status(StatusCodes.OK).send("Not authorized to remove from gallery!")
-            }
-        })
+            })
+        }
+        else {
+            res.status(StatusCodes.OK).send("You have to be admin to remove from gallery.")
+        }
     }
     else {
         return res.status(StatusCodes.OK).send("You are not authorized to access this route of removing from gallery.")
@@ -557,12 +553,11 @@ const addNotifications = async (req, res) => {
 const deleteNotifications = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
         let { clubId, uid } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err);
-            let notifications = club.notifications;
-            let mainAdmin = club.mainAdmin;
-            let notification = notifications.find((item) => item.uid === uid);
-            if (notification.postedBy === req.user.id || mainAdmin === req.user.id) {
+        const isAuthorized = await checkAuthorization(clubId, req.user.id);
+        if (isAuthorized === "Fully-authorized" || isAuthorized === "Authorized") {
+            Club.findById((clubId), (err, club) => {
+                if (err) return console.error(err);
+                let notifications = club.notifications;
                 notifications = notifications.filter((item) => item.uid !== uid);
                 club.notifications = [];
                 club.notifications = [...notifications];
@@ -570,11 +565,12 @@ const deleteNotifications = async (req, res) => {
                     if (err) return console.error(err);
                     return res.status(StatusCodes.OK).send("Notification has been successfully deleted.");
                 })
-            }
-            else {
-                return res.status(StatusCodes.OK).send("You have to be admin to delete notifications from the club.");
-            }
-        })
+            })
+        }
+        else {
+            res.status(StatusCodes.OK).send("You have to be admin to delete notification.")
+        }
+
     }
     else {
         return res.status(StatusCodes.OK).send('You are not authorized to delete notifications from the club.')
@@ -606,22 +602,14 @@ const addTeamMember = async (req, res) => {
         let data = { id, pos };
         const isAuthorized = await checkAuthorization(clubId, req.user.id);
         if (isAuthorized === "Fully-authorized") {
-            const isMember = await checkIsMember(clubId, id);
-            const isAtHigherPost = await checkAuthorization(clubId, id)
-            if (isAtHigherPost === "Fully-authorized" || isAtHigherPost === "Authorized" || isMember === "Is a member") {
-                Club.findById((clubId), (err, club) => {
+            Club.findById((clubId), (err, club) => {
+                if (err) return console.error(err)
+                club.team.push(data);
+                club.save((err, update) => {
                     if (err) return console.error(err)
-                    club.team.push(data);
-                    club.save((err, update) => {
-                        if (err) return console.error(err)
-                        return res.status(StatusCodes.OK).send("Successfully added to the team!")
-                    })
+                    return res.status(StatusCodes.OK).send("Successfully added to the team!")
                 })
-            }
-            else {
-                return res.status(StatusCodes.OK).send("The user has to be at least member of the club to be part of the team.")
-            }
-
+            })
         }
         else {
             return res.status(StatusCodes.OK).send("You have to be main admin to edit club's team.")
@@ -659,57 +647,7 @@ const removeTeamMember = async (req, res) => {
     }
 }
 
-//Controller 14
-const changeTier = async (req, res) => {
-    if (req.user.role === "admin") {
-        const { clubId, tier } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err);
-            club.tier = tier;
-            let amt;
-            if (tier === "Basic") amt = 0;
-            else if (tier === "Advance") amt = 499;
-            else if (tier === "Pro") amt = 999;
-            else return res.status(StatusCodes.OK).send("Invalid tier.");
-            club.tier = tier;
-            let now = new Date()
-            let next30days = new Date(now.setDate(now.getDate() + 30))
-            club.payment = { dueDate: next30days, amt: amt };
-            club.save((err, update) => {
-                if (err) return console.error(err);
-                return res.status(StatusCodes.OK).send(`Tier has been upgraded to ${tier}.`)
-            })
-        })
-    }
-    else {
-        return res.status(StatusCodes.OK).send("You are not allowed to upgrade the tier of the clubs.")
-    }
-}
-
-//Controller 15
-const receivePayment = async (req, res) => {
-    if (req.user.role === "admin") {
-        const { clubId } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err);
-            const payment = club.payment;
-            let lastDate = new Date(payment.dueDate.toString());
-            const amt = payment.amt;
-            const nextDate = new Date(lastDate.setDate(lastDate.getDate() + 30));
-            const newPayment = { dueDate: nextDate, amt: amt };
-            club.payment = newPayment;
-            club.save((err, update) => {
-                if (err) return console.error(err);
-                return res.status(StatusCodes.OK).send("Payment successfully received.")
-            })
-        })
-    }
-    else {
-        return res.status(StatusCodes.OK).send("You are not authorized to receive club membership fee. ")
-    }
-}
-
-//Controller 16
+//Controller 20
 const getAllEvents = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
         const { clubId } = req.query;
@@ -718,60 +656,6 @@ const getAllEvents = async (req, res) => {
     }
     else {
         return res.status(StatusCodes.OK).send("You are not authorized to access the events of the club.")
-    }
-}
-
-//Controller 17
-const getAllMembers = async (req, res) => {
-    if (req.user.role === "admin" || req.user.role === "user") {
-        const { clubId } = req.query;
-        const club = await Club.findById((clubId), { members: 1, _id: 0 })
-        return res.status(StatusCodes.OK).json(club)
-    }
-    else {
-        return res.status(StatusCodes.OK).send("You are not authorized to access the members of the club.")
-    }
-}
-
-//Controller 18
-const getClub = async (req, res) => {
-    if (req.user.role === "admin" || req.user.role === "user") {
-        const { clubId } = req.body;
-        const club = await Club.findById((clubId));
-        if (club) return res.status(StatusCodes.OK).json(club);
-        else return res.status(StatusCodes.OK).send("Could not find the club.");
-    }
-    else {
-        return res.status(StatusCodes.OK).send("You are not authorized to access the club data.");
-    }
-}
-
-//Controller 19
-const getAllClub = async (req, res) => {
-    if (req.user.role === "admin" || req.user.role === "user") {
-        const clubs = await Club.find({}, { secondaryImg: 1, name: 1, tags: 1, motto: 1 });
-        return res.status(StatusCodes.OK).json(clubs);
-    }
-    else {
-        return res.status(StatusCodes.OK).send("You are not authorized to access the entire club data.");
-    }
-}
-
-//Controller 20
-const setVisibility = async (req, res) => {
-    if (req.user.role === "admin") {
-        const { clubId, visible } = req.body;
-        Club.findById((clubId), (err, club) => {
-            if (err) return console.error(err);
-            club.visible = visible;
-            club.save((err, update) => {
-                if (err) return console.error(err);
-                return res.status(StatusCodes.OK).send(`Club visibility set to ${visible}`);
-            })
-        })
-    }
-    else {
-        return res.status(StatusCodes.OK).send("You are not authorized to set the visibility of the club.")
     }
 }
 
@@ -1080,12 +964,48 @@ const getFastNativeFeed = async (req, res) => {
     }
 }
 
+//Controller 40
+const getClub = async (req, res) => {
+    if (req.user.role === "admin" || req.user.role === "user") {
+        const { clubId } = req.body;
+        const club = await Club.findById((clubId));
+        if (club) return res.status(StatusCodes.OK).json(club);
+        else return res.status(StatusCodes.OK).send("Could not find the club.");
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to access the club data.");
+    }
+}
+
+//Controller 41
+const getAllClub = async (req, res) => {
+    if (req.user.role === "admin" || req.user.role === "user") {
+        const clubs = await Club.find({}, { secondaryImg: 1, name: 1, tags: 1, motto: 1 });
+        return res.status(StatusCodes.OK).json(clubs);
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to access the entire club data.");
+    }
+}
+
+//Controller 42
+const getAllMembers = async (req, res) => {
+    if (req.user.role === "admin" || req.user.role === "user") {
+        const { clubId } = req.query;
+        const club = await Club.findById((clubId), { members: 1, _id: 0 })
+        return res.status(StatusCodes.OK).json(club)
+    }
+    else {
+        return res.status(StatusCodes.OK).send("You are not authorized to access the members of the club.")
+    }
+}
+
 
 
 
 module.exports = {
     createClub, deleteClub, joinAsMember, leaveAsMember, addAsMember, removeAsMember, addAdmin, removeAdmin,
-    addNotifications, deleteNotifications, changeTier, receivePayment, getAllEvents, getAllMembers, getClub, setVisibility,
+    addNotifications, deleteNotifications, getAllEvents, getAllMembers, getClub,
     getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember,
     removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile, updateRating, getClubBio,
     getClubContent, getClubGallery, isAdmin, isMember, getClubNotifications, getAllAdmins, getAllTeamMembers, isMainAdmin,
