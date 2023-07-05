@@ -39,7 +39,7 @@ const checkIsMember = async (clubId, userId) => {
 //Controller 1
 const createClub = async (req, res) => {
     if (req.user.role === "admin" || req.user.role === "user") {
-        const club = await Club.create({ ...req.body, adminId: [req.user.id], mainAdmin: req.user.id }, (err, club) => {
+        const club = await Club.create({ ...req.body, adminId: [req.user.id], mainAdmin: req.user.id, team: [{ id: req.user.id, pos: "Founder" }] }, (err, club) => {
             if (err) return console.error(err);
             if (req.user.role === "admin") {
                 Admin.findById((req.user.id), (err, admin) => {
@@ -745,7 +745,7 @@ const getClubsPartOf = async (req, res) => {
 //Controller 25
 const getClubProfile = async (req, res) => {
     const { clubId } = req.query;
-    const club = await Club.findById((clubId), { _id: 0, name: 1, secondaryImg: 1 })
+    const club = await Club.findById((clubId), { _id: 0, name: 1, secondaryImg: 1, motto: 1 })
     return res.status(StatusCodes.OK).json(club)
 }
 
@@ -899,13 +899,14 @@ const getFastFeed = async (req, res) => {
             contents = contents.content;
             totalContent.push(...contents);
         }
-        let finalContent = [];
-        for (let j = 0; j < totalContent.length; j++) {
-            let content = totalContent[j];
-            if (lastActive - new Date(content.timeStamp) < 0) {
-                finalContent.push(content)
-            }
-        }
+        // let finalContent = [];
+        // for (let j = 0; j < totalContent.length; j++) {
+        //     let content = totalContent[j];
+        //     if (lastActive - new Date(content.timeStamp) < 0) {
+        //         finalContent.push(content)
+        //     }
+        // }
+        let finalContent = totalContent;
         let actualContent = [];
         for (let k = 0; k < finalContent.length; k++) {
             let contentId = finalContent[k].contentId;

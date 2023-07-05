@@ -219,6 +219,15 @@ const deleteUnsortedWord = async (req, res) => {
 }
 
 
+//Controller 11
+const masterSearch = async (req, res) => {
+    const { tag } = req.query;
+    console.log(tag);
+    let bags = await Bag.find({ keyWords: new RegExp(tag, "i", "g") }, { keyWords: 1, _id: 0 });
+    return res.status(StatusCodes.OK).json(bags);
+}
 
 
-module.exports = { createBag, search, getAllKeywords, unsortedTag, getUnsortedTags, sortATag, getKeysFromBag, deleteKeyFromBag, deleteABag, deleteUnsortedWord };
+
+
+module.exports = { createBag, search, getAllKeywords, unsortedTag, getUnsortedTags, sortATag, getKeysFromBag, deleteKeyFromBag, deleteABag, deleteUnsortedWord, masterSearch };

@@ -5,12 +5,12 @@ const User = require("../models/user");
 
 //Controller 1
 const createContent = async (req, res) => {
-    const { contentType, sendBy, url, text, belongsTo, tags } = req.body;
-    if (!contentType || !sendBy || !url || !text || !belongsTo) return res.status(StatusCodes.OK).send("Incomplete data.");
+    const { contentType, sendBy, url, text, tags } = req.body;
+    if (!contentType || !sendBy || !url || !text) return res.status(StatusCodes.OK).send("Incomplete data.");
     let idOfSender = req.user.id;
-    let data = { ...req.body, idOfSender };
+    let data = { ...req.body, idOfSender, timeStamp: new Date() };
     let content = await Content.create(data);
-    return res.status(StatusCodes.OK).json(content);
+    return res.status(StatusCodes.OK).json({ contentId: content._id });
 }
 
 //Controller 2
@@ -201,4 +201,35 @@ const getComments = async (req, res) => {
     return res.status(StatusCodes.OK).json(content);
 }
 
-module.exports = { createContent, likeContent, comment, unlikeContent, deleteComment, deleteContent, getContent, getComments };
+//Controller 9
+const getContentBySpan = async (req, res) => {
+    const { span } = req.query;
+    let contents = await Content.find({ sendBy: "Macbease" });
+    let length = contents.length;
+    let date = new Date();
+    let result = [];
+    if (span === "today") {
+        for (let i = 0; i < length; i++) {
+            let content = contents[i];
+            console.log(date - content.timeStamp);
+            if (date - content.timeStamp < 86400000) {
+                result.push(content)
+            }
+        }
+    }
+    else if (span === "week") {
+        for (let i = 0; i < length; i++) {
+            let content = contents[i];
+            console.log(date - content.timeStamp);
+            if (date - content.timeStamp < 604800000) {
+                result.push(content)
+            }
+        }
+    }
+    else if (span === "all") {
+        result = contents;
+    }
+    return res.status(StatusCodes.OK).json(result)
+}
+
+module.exports = { createContent, likeContent, comment, unlikeContent, deleteComment, deleteContent, getContent, getComments, getContentBySpan };

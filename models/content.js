@@ -40,7 +40,19 @@ const contentSchema = new mongoose.Schema({
     useful: {
         type: Boolean,
         default: true
+    },
+    //an important note at the bottom of this page
+    timeStamp: {
+        type: Date,
+        default: new Date()
     }
 });
 
 module.exports = mongoose.model("Content", contentSchema);
+
+//When I was building clubs and community section, I needed every content to have a timeStamp so that I can find latest contents.
+//There I had two options.Either I make changes in content schema or store timeStamp with content id in club and community schema itself
+//I choose the second option which was a bad choice because I need timeStamp again for macbease content and it must be embedded
+//with content schema itself. Though this decision caused bit of complexity but it will not cause any performance issues.
+//In future we can optimize it. So remember that club and community do not use the timestamp of content schema
+//but they have their own copy of timeStamp stored for each content.

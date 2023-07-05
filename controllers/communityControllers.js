@@ -758,7 +758,24 @@ const getContribution = async (req, res) => {
         });
         communityContribution = communityContribution.communityContribution;
         communityContribution = communityContribution.filter(item => item.communityId === communityId);
-        return res.status(StatusCodes.OK).json(communityContribution)
+        let actualContent = [];
+        for (let k = 0; k < communityContribution.length; k++) {
+            let contentId = communityContribution[k].contentId;
+            let actualData = await Content.findById((contentId));
+            actualData = actualData._doc;
+            let data = { ...actualData };
+            actualContent.push(data)
+        }
+        let finishedContent = [];
+        for (let l = 0; l < actualContent.length; l++) {
+            let data = actualContent[l];
+            let userId = data.idOfSender;
+            let communityId = data.belongsTo;
+            let user = await User.findById((userId), { image: 1, name: 1, _id: 0 });
+            let withPicData = { ...data, userName: user.name, userPic: user.image }
+            finishedContent.push(withPicData);
+        }
+        return res.status(StatusCodes.OK).json(finishedContent)
     }
     else if (req.user.role === "admin") {
         let communityContribution = await Admin.findById((req.user.id), {
@@ -766,7 +783,24 @@ const getContribution = async (req, res) => {
         });
         communityContribution = communityContribution.communityContribution;
         communityContribution = communityContribution.filter(item => item.communityId === communityId);
-        return res.status(StatusCodes.OK).json(communityContribution)
+        let actualContent = [];
+        for (let k = 0; k < communityContribution.length; k++) {
+            let contentId = communityContribution[k].contentId;
+            let actualData = await Content.findById((contentId));
+            actualData = actualData._doc;
+            let data = { ...actualData };
+            actualContent.push(data)
+        }
+        let finishedContent = [];
+        for (let l = 0; l < actualContent.length; l++) {
+            let data = actualContent[l];
+            let userId = data.idOfSender;
+            let communityId = data.belongsTo;
+            let user = await Admin.findById((userId), { image: 1, name: 1, _id: 0 });
+            let withPicData = { ...data, userName: user.name, userPic: user.image }
+            finishedContent.push(withPicData);
+        }
+        return res.status(StatusCodes.OK).json(finishedContent)
     }
 
 }
@@ -809,13 +843,14 @@ const getFastFeed = async (req, res) => {
             contents = contents.content;
             totalContent.push(...contents);
         }
-        let finalContent = [];
-        for (let j = 0; j < totalContent.length; j++) {
-            let content = totalContent[j];
-            if (lastActive - new Date(content.timeStamp) < 0) {
-                finalContent.push(content)
-            }
-        }
+        // let finalContent = [];
+        // for (let j = 0; j < totalContent.length; j++) {
+        //     let content = totalContent[j];
+        //     if (lastActive - new Date(content.timeStamp) < 0) {
+        //         finalContent.push(content)
+        //     }
+        // }
+        let finalContent = totalContent;
         let actualContent = [];
         for (let k = 0; k < finalContent.length; k++) {
             let contentId = finalContent[k].contentId;

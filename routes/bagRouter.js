@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { createBag, search, getAllKeywords, unsortedTag, getUnsortedTags, sortATag, getKeysFromBag, deleteKeyFromBag, deleteABag, deleteUnsortedWord } = require("../controllers/bagControllers");
+const { createBag, search, getAllKeywords, unsortedTag, getUnsortedTags, sortATag, getKeysFromBag, deleteKeyFromBag, deleteABag, deleteUnsortedWord, masterSearch } = require("../controllers/bagControllers");
 
 router.post("/createBag", createBag);
 router.post("/search", search);
@@ -13,5 +13,6 @@ router.post("/getKeysFromBag", getKeysFromBag);
 router.post("/deleteKeyFromBag", deleteKeyFromBag);
 router.post("/deleteABag", deleteABag);
 router.post("/deleteUnsortedWord", deleteUnsortedWord);
+router.get("/masterSearch", masterSearch);
 
 module.exports = router;
