@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { createClub, deleteClub, joinAsMember, leaveAsMember, addAsMember, removeAsMember, addAdmin, removeAdmin, addNotifications, deleteNotifications, getAllEvents, getAllMembers, getClub, getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember, removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile, updateRating, getClubBio, getClubContent, getClubGallery, isAdmin, isMember, getClubNotifications, getAllAdmins, getAllTeamMembers, isMainAdmin, getCreatorId, getFastFeed, getStatus, getFastNativeFeed } = require("../controllers/clubControllers");
+const { createClub, deleteClub, joinAsMember, leaveAsMember, addAsMember, removeAsMember, addAdmin, removeAdmin, addNotifications, deleteNotifications, getAllEvents, getAllMembers, getClub, getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember, removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile, updateRating, getClubBio, getClubContent, getClubGallery, isAdmin, isMember, getClubNotifications, getAllAdmins, getAllTeamMembers, isMainAdmin, getCreatorId, getFastFeed, getStatus, getFastNativeFeed, getAllLikedPins } = require("../controllers/clubControllers");
 
 router.post('/createClub', createClub);
 router.post('/deleteClub', deleteClub);
@@ -45,5 +45,6 @@ router.get('/getCreatorId', getCreatorId);
 router.get('/getFastFeed', getFastFeed);
 router.get('/getStatus', getStatus);
 router.get('/getFastNativeFeed', getFastNativeFeed);
+router.get('/getAllLikedPins', getAllLikedPins);
 
 module.exports = router;

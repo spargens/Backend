@@ -5,10 +5,16 @@ const User = require("../models/user");
 
 //Controller 1
 const createContent = async (req, res) => {
-    const { contentType, sendBy, url, text, tags } = req.body;
+    const { contentType, sendBy, url, text, tags, key } = req.body;
     if (!contentType || !sendBy || !url || !text) return res.status(StatusCodes.OK).send("Incomplete data.");
     let idOfSender = req.user.id;
-    let data = { ...req.body, idOfSender, timeStamp: new Date() };
+    let data;
+    if (key === "normal") {
+        data = { ...req.body, idOfSender, timeStamp: new Date() };
+    }
+    else {
+        data = { ...req.body, idOfSender, timeStamp: key };
+    }
     let content = await Content.create(data);
     return res.status(StatusCodes.OK).json({ contentId: content._id });
 }

@@ -3,6 +3,7 @@ const Club = require('../models/club');
 const User = require('../models/user');
 const Admin = require('../models/admin');
 const Content = require("../models/content");
+const Community = require("../models/community");
 
 
 //Middleware
@@ -1001,6 +1002,44 @@ const getAllMembers = async (req, res) => {
     }
 }
 
+//Controller 43
+const getAllLikedPins = async (req, res) => {
+    if (req.user.role === "user") {
+        let { key } = req.query;
+        let likedContents = await User.findById((req.user.id), { likedContents: 1, _id: 0 });
+        likedContents = likedContents.likedContents;
+        let data = [];
+        for (let i = 0; i < likedContents.length; i++) {
+            let likedContent = likedContents[i];
+            let actualData = await Content.findById((likedContent.contentId));
+            actualData = actualData._doc;
+            if (likedContent.type === "club") {
+                let idOfSender = actualData.idOfSender;
+                let belongsTo = actualData.belongsTo;
+                let user = await User.findById((idOfSender), { image: 1, name: 1, _id: 0 });
+                let club = await Club.findById((belongsTo), { name: 1, secondaryImg: 1, _id: 0 });
+                let withPicDataClub = { ...actualData, userName: user.name, userPic: user.image, clubTitle: club.name, clubCover: club.secondaryImg };
+                data.push(withPicDataClub)
+            }
+            else if (likedContent.type === "community") {
+                let idOfSender = actualData.idOfSender;
+                let belongsTo = actualData.belongsTo;
+                let user = await User.findById((idOfSender), { image: 1, name: 1, _id: 0 });
+                let community = await Community.findById((belongsTo), { title: 1, secondaryCover: 1, _id: 0 });
+                let withPicDataCommunity = { ...actualData, userName: user.name, userPic: user.image, communityTitle: community.title, communityCover: community.secondaryCover };
+                data.push(withPicDataCommunity)
+            }
+            else if (likedContent.type === "Macbease" && key === "all") {
+                let belongsTo = actualData.belongsTo;
+                let user = await User.findById((belongsTo), { image: 1, name: 1, _id: 0 });
+                let withPicDataCommunity = { ...actualData, contributorName: user.name, contributorPic: user.image };
+                data.push(withPicDataCommunity)
+            }
+        }
+        return res.status(StatusCodes.OK).json({ likedSocialPins: data })
+    }
+}
+
 
 
 
@@ -1010,5 +1049,5 @@ module.exports = {
     getAllClub, postEvent, removeEvent, postContent, removeContent, postGallery, removeGallery, editProfile, addTeamMember,
     removeTeamMember, getClubsByTag, getLikeStatus, getLatestContent, getClubsPartOf, getClubProfile, updateRating, getClubBio,
     getClubContent, getClubGallery, isAdmin, isMember, getClubNotifications, getAllAdmins, getAllTeamMembers, isMainAdmin,
-    getCreatorId, getFastFeed, getStatus, getFastNativeFeed
+    getCreatorId, getFastFeed, getStatus, getFastNativeFeed, getAllLikedPins
 }

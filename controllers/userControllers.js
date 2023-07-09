@@ -168,4 +168,11 @@ const getUserByToken = async (req, res) => {
     }
 }
 
-module.exports = { getUser, updateUser, deleteUser, createCard, deleteCard, fetchCards, getYourMessages, postYourMessages, getUserByToken }
+//controller to search user by name
+const searchUserByName = async (req, res) => {
+    const { name } = req.query;
+    const users = await User.find({ name: new RegExp(name, "i", "g") }, { name: 1, image: 1, _id: 1 });
+    return res.status(StatusCodes.OK).json(users)
+}
+
+module.exports = { getUser, updateUser, deleteUser, createCard, deleteCard, fetchCards, getYourMessages, postYourMessages, getUserByToken, searchUserByName }
